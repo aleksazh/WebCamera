@@ -1,0 +1,22 @@
+canvas, video {
+    box-shadow: 0px 0px 40px 0px rgba(0,0,0,0.75);
+}
+td {
+  padding: 10px 0px 0px 10px;
+  text-align: center;
+}
+.err {
+  color: red;
+  font-weight: bold;
+}
+.hidden {
+  display: none;
+}
+.cell-top {
+  vertical-align: top;
+}
+.centered {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
