@@ -275,6 +275,9 @@ function processVideo() {
     default: result = passThrough(src);
   }
   cv.imshow('canvasOutput', result);
+  let smallResult = gray(src);
+  cv.resize(smallResult, smallResult, new cv.Size(64, 48), 0, 0, cv.INTER_CUBIC);
+  cv.imshow('canvas1', smallResult);
   lastFilter = controls.filter;
   requestAnimationFrame(processVideo);
 }
@@ -298,7 +301,7 @@ let filters = {
   'equalizeHist': 'Equalization',
   'backprojection': 'Backprojection',
   'erosion': 'Erosion',
-  'dilation': 'Dilation',
+  'dilationerosion': 'Dilation',
   'morphology': 'Morphology',
 };
 
@@ -307,6 +310,7 @@ let filterName = document.getElementById('filterName');
 let controls;
 
 function initUI() {
+
   controls = {
     filter: 'passThrough',
     setFilter: function (filter) {
@@ -591,6 +595,62 @@ function initUI() {
   };
   backprojection.add(controls, 'backprojectionRangeLow', 0, 255, 1).name('range low');
   backprojection.add(controls, 'backprojectionRangeHigh', 0, 255, 1).name('range high');
+
+
+  document.getElementById('passThrough').onclick = function () {
+    controls.passThrough();
+  }
+  document.getElementById('gray').onclick = function () {
+    controls.gray();
+  }
+  document.getElementById('hsv').onclick = function () {
+    controls.hsv();
+  }
+  document.getElementById('inRange').onclick = function () {
+    controls.inRange();
+  }
+  document.getElementById('threshold').onclick = function () {
+    controls.threshold();
+  }
+  document.getElementById('adaptiveThreshold').onclick = function () {
+    controls.adaptiveThreshold();
+  }
+  document.getElementById('gaussianBlur').onclick = function () {
+    controls.gaussianBlur();
+  }
+  document.getElementById('medianBlur').onclick = function () {
+    controls.medianBlur();
+  }
+  document.getElementById('bilateralFilter').onclick = function () {
+    controls.bilateralFilter();
+  }
+  document.getElementById('morphology').onclick = function () {
+    controls.morphology();
+  }
+  document.getElementById('sobel').onclick = function () {
+    controls.sobel();
+  }
+  document.getElementById('scharr').onclick = function () {
+    controls.scharr();
+  }
+  document.getElementById('laplacian').onclick = function () {
+    controls.laplacian();
+  }
+  document.getElementById('canny').onclick = function () {
+    controls.canny();
+  }
+  document.getElementById('contours').onclick = function () {
+    controls.contours();
+  }
+  document.getElementById('calcHist').onclick = function () {
+    controls.calcHist();
+  }
+  document.getElementById('equalizeHist').onclick = function () {
+    controls.equalizeHist();
+  }
+  document.getElementById('backprojection').onclick = function () {
+    controls.backprojection();
+  }
 }
 
 function startCamera() {
