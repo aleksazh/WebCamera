@@ -25,7 +25,7 @@
       </tr>
       <tr>
         <td class="cell-top">
-          <canvas id="canvasOutput" width="640" height="480"></canvas>
+          <canvas id="canvasOutput" class="canvas-big" width="640" height="480"></canvas>
         </td>
         <td class="cell-top">
           <div id="guiContainer"></div>
@@ -34,24 +34,24 @@
       <tr>
         <td>
           <div id="filterMenu" class="scrollmenu">
-            <li id="passThrough">No Filter</li>
-            <li id="gray">Gray</li>
-            <li id="hsv">HSV</li>
-            <li id="inRange">In Range</li>
-            <li id="threshold">Threshold</li>
-            <li id="adaptiveThreshold">Adaptive Threshold</ali>
-            <li id="gaussianBlur">Gaussian Blurring</li>
-            <li id="medianBlur">Median Blurring</li>
-            <li id="bilateralFilter">Bilateral Filtering</li>
-            <li id="morphology">Morphology</li>
-            <li id="sobel">Sobel Derivatives</li>
-            <li id="scharr">Scharr Derivatives</li>
-            <li id="laplacian">Laplacian Derivatives</li>
-            <li id="canny">Canny Edge Detection</li>
-            <li id="contours">Contours</li>
-            <li id="calcHist">Calculation</li>
-            <li id="equalizeHist">Equalization</li>
-            <li id="backprojection">Backprojection</li>
+            <canvas id="passThrough">No Filter</canvas>
+            <canvas id="gray">Gray</canvas>
+            <canvas id="hsv">HSV</canvas>
+            <canvas id="inRange">In Range</canvas>
+            <canvas id="threshold">Threshold</canvas>
+            <canvas id="adaptiveThreshold">Adaptive Threshold</canvas>
+            <canvas id="gaussianBlur">Gaussian Blurring</canvas>
+            <canvas id="medianBlur">Median Blurring</canvas>
+            <canvas id="bilateralFilter">Bilateral Filtering</canvas>
+            <canvas id="morphology">Morphology</canvas>
+            <canvas id="sobel">Sobel Derivatives</canvas>
+            <canvas id="scharr">Scharr Derivatives</canvas>
+            <canvas id="laplacian">Laplacian Derivatives</canvas>
+            <canvas id="canny">Canny Edge Detection</canvas>
+            <canvas id="contours">Contours</canvas>
+            <canvas id="calcHist">Calculation</canvas>
+            <canvas id="equalizeHist">Equalization</canvas>
+            <canvas id="backprojection">Backprojection</canvas>
           </div>
         </td>
         <td></td>
@@ -61,7 +61,6 @@
       <video id="videoInput" class="hidden">Your browser does not support the video tag.</video>
     </div>
   </div>
-  <canvas id="canvas1" width="64" height="48"></canvas>
   <p id="output"></p>
   <script src="https://webrtc.github.io/adapter/adapter-5.0.4.js" type="text/javascript"></script> <!-- ? -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.4/dat.gui.min.js" type="text/javascript"></script>

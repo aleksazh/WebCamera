@@ -3,7 +3,8 @@ let utils = new Utils('errorMessage');
 let width = 0;
 let height = 0;
 
-let resolution = window.innerWidth < 960 ? 'qvga' : 'vga';
+//let resolution = window.innerWidth < 960 ? 'qvga' : 'vga';
+let resolution = 'vga';
 
 // whether streaming video from the camera.
 let streaming = false;
@@ -18,6 +19,9 @@ let src = null;
 let dstC1 = null;
 let dstC3 = null;
 let dstC4 = null;
+
+let maxIter = 100;
+let count = maxIter;
 
 function startVideoProcessing() {
   src = new cv.Mat(height, width, cv.CV_8UC4);
@@ -212,24 +216,6 @@ function backprojection(src) {
   return dstC1;
 }
 
-function erosion(src) {
-  let kernelSize = controls.erosionSize;
-  let kernel = cv.Mat.ones(kernelSize, kernelSize, cv.CV_8U);
-  let color = new cv.Scalar();
-  cv.erode(src, dstC4, kernel, { x: -1, y: -1 }, 1, Number(controls.erosionBorderType), color);
-  kernel.delete();
-  return dstC4;
-}
-
-function dilation(src) {
-  let kernelSize = controls.dilationSize;
-  let kernel = cv.Mat.ones(kernelSize, kernelSize, cv.CV_8U);
-  let color = new cv.Scalar();
-  cv.dilate(src, dstC4, kernel, { x: -1, y: -1 }, 1, Number(controls.dilationBorderType), color);
-  kernel.delete();
-  return dstC4;
-}
-
 function morphology(src) {
   let kernelSize = controls.morphologySize;
   let kernel = cv.getStructuringElement(Number(controls.morphologyShape),
@@ -269,16 +255,71 @@ function processVideo() {
     case 'calcHist': result = calcHist(src); break;
     case 'equalizeHist': result = equalizeHist(src); break;
     case 'backprojection': result = backprojection(src); break;
-    case 'erosion': result = erosion(src); break;
-    case 'dilation': result = dilation(src); break;
     case 'morphology': result = morphology(src); break;
     default: result = passThrough(src);
   }
   cv.imshow('canvasOutput', result);
-  let smallResult = gray(src);
-  cv.resize(smallResult, smallResult, new cv.Size(64, 48), 0, 0, cv.INTER_CUBIC);
-  cv.imshow('canvas1', smallResult);
   lastFilter = controls.filter;
+
+  //if (count == maxIter) {
+    let smallSize = new cv.Size(64, 48);
+    let smallResult = gray(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('gray', smallResult);
+    smallResult = hsv(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('hsv', smallResult);
+    smallResult = canny(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('canny', smallResult);
+    smallResult = inRange(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('inRange', smallResult);
+    smallResult = threshold(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('threshold', smallResult);
+    smallResult = adaptiveThreshold(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('adaptiveThreshold', smallResult);
+    smallResult = gaussianBlur(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('gaussianBlur', smallResult);
+    smallResult = bilateralFilter(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('bilateralFilter', smallResult);
+    smallResult = medianBlur(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('medianBlur', smallResult);
+    smallResult = sobel(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('sobel', smallResult);
+    smallResult = scharr(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('scharr', smallResult);
+    smallResult = laplacian(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('laplacian', smallResult);
+    smallResult = contours(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('contours', smallResult);
+    smallResult = calcHist(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('calcHist', smallResult);
+    smallResult = equalizeHist(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('equalizeHist', smallResult);
+    smallResult = backprojection(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('backprojection', smallResult);
+    smallResult = morphology(src);
+    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
+    cv.imshow('morphology', smallResult);
+
+  //  count = 0;
+  //}
+  //++count;
+
+
   requestAnimationFrame(processVideo);
 }
 
@@ -300,8 +341,6 @@ let filters = {
   'calcHist': 'Calculation',
   'equalizeHist': 'Equalization',
   'backprojection': 'Backprojection',
-  'erosion': 'Erosion',
-  'dilationerosion': 'Dilation',
   'morphology': 'Morphology',
 };
 
