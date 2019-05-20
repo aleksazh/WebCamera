@@ -3,13 +3,14 @@ let utils = new Utils('errorMessage');
 let width = 0;
 let height = 0;
 
-//let resolution = window.innerWidth < 960 ? 'qvga' : 'vga';
-let resolution = 'vga';
+let smallWidth = 128;
+let smallHeight = 96;
 
 // whether streaming video from the camera.
 let streaming = false;
 
 let video = document.getElementById('videoInput');
+let smallVideo = document.getElementById('smallVideoInput');
 let vc = null;
 
 let container = document.getElementById('container');
@@ -19,6 +20,10 @@ let src = null;
 let dstC1 = null;
 let dstC3 = null;
 let dstC4 = null;
+let srcSmall = null;
+let dstC1Small = null;
+let dstC3Small = null;
+let dstC4Small = null;
 
 let maxIter = 100;
 let count = maxIter;
@@ -28,6 +33,10 @@ function startVideoProcessing() {
   dstC1 = new cv.Mat(height, width, cv.CV_8UC1);
   dstC3 = new cv.Mat(height, width, cv.CV_8UC3);
   dstC4 = new cv.Mat(height, width, cv.CV_8UC4);
+  srcSmall = new cv.Mat(smallHeight, smallWidth, cv.CV_8UC4);
+  dstC1Small = new cv.Mat(smallHeight, smallWidth, cv.CV_8UC1);
+  dstC3Small = new cv.Mat(smallHeight, smallWidth, cv.CV_8UC3);
+  dstC4Small = new cv.Mat(smallHeight, smallWidth, cv.CV_8UC4);
   requestAnimationFrame(processVideo);
 }
 
@@ -35,25 +44,25 @@ function passThrough(src) {
   return src;
 }
 
-function gray(src) {
+function gray(src, dstC1) {
   cv.cvtColor(src, dstC1, cv.COLOR_RGBA2GRAY);
   return dstC1;
 }
 
-function hsv(src) {
+function hsv(src, dstC3) {
   cv.cvtColor(src, dstC3, cv.COLOR_RGBA2RGB);
   cv.cvtColor(dstC3, dstC3, cv.COLOR_RGB2HSV);
   return dstC3;
 }
 
-function canny(src) {
+function canny(src, dstC1) {
   cv.cvtColor(src, dstC1, cv.COLOR_RGBA2GRAY);
   cv.Canny(dstC1, dstC1, controls.cannyThreshold1, controls.cannyThreshold2,
     controls.cannyApertureSize, controls.cannyL2Gradient);
   return dstC1;
 }
 
-function inRange(src) {
+function inRange(src, dstC1, height, width) {
   let lowValue = controls.inRangeLow;
   let lowScalar = new cv.Scalar(lowValue, lowValue, lowValue, 255);
   let highValue = controls.inRangeHigh;
@@ -65,12 +74,12 @@ function inRange(src) {
   return dstC1;
 }
 
-function threshold(src) {
+function threshold(src, dstC4) {
   cv.threshold(src, dstC4, controls.thresholdValue, 200, cv.THRESH_BINARY);
   return dstC4;
 }
 
-function adaptiveThreshold(src) {
+function adaptiveThreshold(src, dstC1, height, width) {
   let mat = new cv.Mat(height, width, cv.CV_8U);
   cv.cvtColor(src, mat, cv.COLOR_RGBA2GRAY);
   cv.adaptiveThreshold(mat, dstC1, 200, cv.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -79,14 +88,14 @@ function adaptiveThreshold(src) {
   return dstC1;
 }
 
-function gaussianBlur(src) {
+function gaussianBlur(src, dstC4) {
   cv.GaussianBlur(src, dstC4,
     { width: controls.gaussianBlurSize, height: controls.gaussianBlurSize },
     0, 0, cv.BORDER_DEFAULT);
   return dstC4;
 }
 
-function bilateralFilter(src) {
+function bilateralFilter(src, dstC3, height, width) {
   let mat = new cv.Mat(height, width, cv.CV_8UC3);
   cv.cvtColor(src, mat, cv.COLOR_RGBA2RGB);
   cv.bilateralFilter(mat, dstC3, controls.bilateralFilterDiameter, controls.bilateralFilterSigma,
@@ -95,12 +104,12 @@ function bilateralFilter(src) {
   return dstC3;
 }
 
-function medianBlur(src) {
+function medianBlur(src, dstC4) {
   cv.medianBlur(src, dstC4, controls.medianBlurSize);
   return dstC4;
 }
 
-function sobel(src) {
+function sobel(src, dstC1, height, width) {
   let mat = new cv.Mat(height, width, cv.CV_8UC1);
   cv.cvtColor(src, mat, cv.COLOR_RGB2GRAY, 0);
   cv.Sobel(mat, dstC1, cv.CV_8U, 1, 0, controls.sobelSize, 1, 0, cv.BORDER_DEFAULT);
@@ -108,7 +117,7 @@ function sobel(src) {
   return dstC1;
 }
 
-function scharr(src) {
+function scharr(src, dstC1, height, width) {
   let mat = new cv.Mat(height, width, cv.CV_8UC1);
   cv.cvtColor(src, mat, cv.COLOR_RGB2GRAY, 0);
   cv.Scharr(mat, dstC1, cv.CV_8U, 1, 0, 1, 0, cv.BORDER_DEFAULT);
@@ -116,7 +125,7 @@ function scharr(src) {
   return dstC1;
 }
 
-function laplacian(src) {
+function laplacian(src, dstC1, height, width) {
   let mat = new cv.Mat(height, width, cv.CV_8UC1);
   cv.cvtColor(src, mat, cv.COLOR_RGB2GRAY);
   cv.Laplacian(mat, dstC1, cv.CV_8U, controls.laplacianSize, 1, 0, cv.BORDER_DEFAULT);
@@ -131,7 +140,7 @@ for (let i = 0; i < 10000; i++) {
   Math.round(Math.random() * 255), 0]);
 }
 
-function contours(src) {
+function contours(src, dstC1, dstC3, dstC4, height, width) {
   cv.cvtColor(src, dstC1, cv.COLOR_RGBA2GRAY);
   cv.threshold(dstC1, dstC4, 120, 200, cv.THRESH_BINARY);
   let contours = new cv.MatVector();
@@ -149,7 +158,7 @@ function contours(src) {
   return dstC3;
 }
 
-function calcHist(src) {
+function calcHist(src, dstC1, dstC4) {
   cv.cvtColor(src, dstC1, cv.COLOR_RGBA2GRAY);
   let srcVec = new cv.MatVector();
   srcVec.push_back(dstC1);
@@ -176,7 +185,7 @@ function calcHist(src) {
   return dstC4;
 }
 
-function equalizeHist(src) {
+function equalizeHist(src, dstC1) {
   cv.cvtColor(src, dstC1, cv.COLOR_RGBA2GRAY, 0);
   cv.equalizeHist(dstC1, dstC1);
   return dstC1;
@@ -184,7 +193,7 @@ function equalizeHist(src) {
 
 let base;
 
-function backprojection(src) {
+function backprojection(src, dstC1, dstC3) {
   if (lastFilter !== 'backprojection') {
     if (base instanceof cv.Mat) {
       base.delete();
@@ -216,7 +225,7 @@ function backprojection(src) {
   return dstC1;
 }
 
-function morphology(src) {
+function morphology(src, dstC3, dstC4) {
   let kernelSize = controls.morphologySize;
   let kernel = cv.getStructuringElement(Number(controls.morphologyShape),
     { width: kernelSize, height: kernelSize });
@@ -239,81 +248,49 @@ function processVideo() {
   let result;
   switch (controls.filter) {
     case 'passThrough': result = passThrough(src); break;
-    case 'gray': result = gray(src); break;
-    case 'hsv': result = hsv(src); break;
-    case 'canny': result = canny(src); break;
-    case 'inRange': result = inRange(src); break;
-    case 'threshold': result = threshold(src); break;
-    case 'adaptiveThreshold': result = adaptiveThreshold(src); break;
-    case 'gaussianBlur': result = gaussianBlur(src); break;
-    case 'bilateralFilter': result = bilateralFilter(src); break;
-    case 'medianBlur': result = medianBlur(src); break;
-    case 'sobel': result = sobel(src); break;
-    case 'scharr': result = scharr(src); break;
-    case 'laplacian': result = laplacian(src); break;
-    case 'contours': result = contours(src); break;
-    case 'calcHist': result = calcHist(src); break;
-    case 'equalizeHist': result = equalizeHist(src); break;
-    case 'backprojection': result = backprojection(src); break;
-    case 'morphology': result = morphology(src); break;
+    case 'gray': result = gray(src, dstC1); break;
+    case 'hsv': result = hsv(src, dstC3); break;
+    case 'canny': result = canny(src, dstC1); break;
+    //case 'inRange': result = inRange(src, dstC1, height, width); break;
+    case 'threshold': result = threshold(src, dstC4); break;
+    case 'adaptiveThreshold': result = adaptiveThreshold(src, dstC1, height, width); break;
+    case 'gaussianBlur': result = gaussianBlur(src, dstC4); break;
+    case 'bilateralFilter': result = bilateralFilter(src, dstC3, height, width); break;
+    case 'medianBlur': result = medianBlur(src, dstC4); break;
+    case 'sobel': result = sobel(src, dstC1, height, width); break;
+    case 'scharr': result = scharr(src, dstC1, height, width); break;
+    case 'laplacian': result = laplacian(src, dstC1, height, width); break;
+    //case 'contours': result = contours(src, dstC1, dstC3, dstC4, height, width); break;
+    case 'calcHist': result = calcHist(src, dstC1, dstC4); break;
+    case 'equalizeHist': result = equalizeHist(src, dstC1); break;
+    case 'backprojection': result = backprojection(src, dstC1, dstC3); break;
+    case 'morphology': result = morphology(src, dstC3, dstC4); break;
     default: result = passThrough(src);
   }
   cv.imshow('canvasOutput', result);
   lastFilter = controls.filter;
 
-  //if (count == maxIter) {
-    let smallSize = new cv.Size(64, 48);
-    let smallResult = gray(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('gray', smallResult);
-    smallResult = hsv(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('hsv', smallResult);
-    smallResult = canny(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('canny', smallResult);
-    smallResult = inRange(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('inRange', smallResult);
-    smallResult = threshold(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('threshold', smallResult);
-    smallResult = adaptiveThreshold(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('adaptiveThreshold', smallResult);
-    smallResult = gaussianBlur(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('gaussianBlur', smallResult);
-    smallResult = bilateralFilter(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('bilateralFilter', smallResult);
-    smallResult = medianBlur(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('medianBlur', smallResult);
-    smallResult = sobel(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('sobel', smallResult);
-    smallResult = scharr(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('scharr', smallResult);
-    smallResult = laplacian(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('laplacian', smallResult);
-    smallResult = contours(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('contours', smallResult);
-    smallResult = calcHist(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('calcHist', smallResult);
-    smallResult = equalizeHist(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('equalizeHist', smallResult);
-    smallResult = backprojection(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('backprojection', smallResult);
-    smallResult = morphology(src);
-    cv.resize(smallResult, smallResult, smallSize, 0, 0, cv.INTER_CUBIC);
-    cv.imshow('morphology', smallResult);
+  srcSmall = src.clone();
+  let smallSize = new cv.Size(smallWidth, smallHeight);
+  cv.resize(srcSmall, srcSmall, smallSize, 0, 0, cv.INTER_CUBIC);
+  cv.imshow('passThrough', passThrough(srcSmall));
+  cv.imshow('gray', gray(srcSmall, dstC1Small));
+  cv.imshow('hsv', hsv(srcSmall, dstC3Small));
+  cv.imshow('canny', canny(srcSmall, dstC1Small));
+  //cv.imshow('inRange', inRange(srcSmall, dstC1Small, smallHeight, smallWidth));
+  cv.imshow('threshold', threshold(srcSmall, dstC4Small));
+  cv.imshow('adaptiveThreshold', adaptiveThreshold(srcSmall, dstC1Small, smallHeight, smallWidth));
+  cv.imshow('gaussianBlur', gaussianBlur(srcSmall, dstC4Small));
+  cv.imshow('bilateralFilter', bilateralFilter(srcSmall, dstC3Small, smallHeight, smallWidth));
+  cv.imshow('medianBlur', medianBlur(srcSmall, dstC4Small));
+  cv.imshow('sobel', sobel(srcSmall, dstC1Small, smallHeight, smallWidth));
+  cv.imshow('scharr', scharr(srcSmall, dstC1Small, smallHeight, smallWidth));
+  cv.imshow('laplacian', laplacian(srcSmall, dstC1Small, smallHeight, smallWidth));
+  //cv.imshow('contours', contours(srcSmall, dstC1Small, dstC3Small, dstC4Small, smallHeight, smallWidth));
+  cv.imshow('calcHist', calcHist(srcSmall, dstC1Small, dstC4Small));
+  cv.imshow('equalizeHist', equalizeHist(srcSmall, dstC1Small));
+  cv.imshow('backprojection', backprojection(srcSmall, dstC1Small, dstC3Small));
+  cv.imshow('morphology', morphology(srcSmall, dstC3Small, dstC4Small));
 
   //  count = 0;
   //}
@@ -324,11 +301,11 @@ function processVideo() {
 }
 
 let filters = {
-  'passThrough': 'Pass Through',
+  'passThrough': 'No Filter',
   'gray': 'Gray',
   'hsv': 'HSV',
   'canny': 'Canny Edge Detection',
-  'inRange': 'In Range',
+//  'inRange': 'In Range',
   'threshold': 'Threshold',
   'adaptiveThreshold': 'Adaptive Threshold',
   'gaussianBlur': 'Gaussian Blurring',
@@ -337,7 +314,7 @@ let filters = {
   'sobel': 'Sobel Derivatives',
   'scharr': 'Scharr Derivatives',
   'laplacian': 'Laplacian Derivatives',
-  'contours': 'Contours',
+//  'contours': 'Contours',
   'calcHist': 'Calculation',
   'equalizeHist': 'Equalization',
   'backprojection': 'Backprojection',
@@ -645,10 +622,10 @@ function initUI() {
   document.getElementById('hsv').onclick = function () {
     controls.hsv();
   }
-  document.getElementById('inRange').onclick = function () {
+ /* document.getElementById('inRange').onclick = function () {
     controls.inRange();
   }
-  document.getElementById('threshold').onclick = function () {
+ */ document.getElementById('threshold').onclick = function () {
     controls.threshold();
   }
   document.getElementById('adaptiveThreshold').onclick = function () {
@@ -678,10 +655,10 @@ function initUI() {
   document.getElementById('canny').onclick = function () {
     controls.canny();
   }
-  document.getElementById('contours').onclick = function () {
+  /*document.getElementById('contours').onclick = function () {
     controls.contours();
   }
-  document.getElementById('calcHist').onclick = function () {
+ */ document.getElementById('calcHist').onclick = function () {
     controls.calcHist();
   }
   document.getElementById('equalizeHist').onclick = function () {
@@ -695,7 +672,7 @@ function initUI() {
 function startCamera() {
   if (!streaming) {
     utils.clearError();
-    utils.startCamera(resolution, onVideoStarted, 'videoInput');
+    utils.startCamera(onVideoStarted, 'videoInput');
   } else {
     utils.stopCamera();
     onVideoStopped();
@@ -717,6 +694,10 @@ function stopVideoProcessing() {
   if (dstC1 != null && !dstC1.isDeleted()) dstC1.delete();
   if (dstC3 != null && !dstC3.isDeleted()) dstC3.delete();
   if (dstC4 != null && !dstC4.isDeleted()) dstC4.delete();
+  if (srcSmall != null && !srcSmall.isDeleted()) srcSmall.delete();
+  if (dstC1Small != null && !dstC1Small.isDeleted()) dstC1Small.delete();
+  if (dstC3Small != null && !dstC3Small.isDeleted()) dstC3Small.delete();
+  if (dstC4Small != null && !dstC4Small.isDeleted()) dstC4Small.delete();
 }
 
 function onVideoStopped() {

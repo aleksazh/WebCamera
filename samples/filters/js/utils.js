@@ -2,7 +2,7 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   let self = this;
   this.errorOutput = document.getElementById(errorOutputId);
 
-  const OPENCV_URL = 'https://docs.opencv.org/3.4/opencv.js';
+  const OPENCV_URL = '../../build/wasm/opencv.js';
   this.loadOpenCv = function(onloadCallback) {
     let script = document.createElement('script');
     script.setAttribute('async', '');
@@ -62,21 +62,15 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
     }
   };
 
-  this.startCamera = function(resolution, callback, videoId) {
+  this.startCamera = function(callback, videoId) {
     const constraints = {
-      'qvga': {width: {exact: 320}, height: {exact: 240}},
       'vga': {width: {exact: 640}, height: {exact: 480}}};
     let video = document.getElementById(videoId);
     if (!video) {
       video = document.createElement('video');
     }
-
-    let videoConstraint = constraints[resolution];
-    if (!videoConstraint) {
-      videoConstraint = true;
-    }
-
-    navigator.mediaDevices.getUserMedia({video: videoConstraint, audio: false})
+    
+    navigator.mediaDevices.getUserMedia({video: constraints['vga'], audio: false})
       .then(function(stream) {
         video.srcObject = stream;
         video.play();
