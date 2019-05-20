@@ -61,12 +61,12 @@ $('.menu').on('scroll', function() {
 
 // scroll to left
 $(rightPaddle).on('click', function() {
-    currentPosition += menuWrapperSize;
+    currentPosition += menuWrapperSize - menuWrapperSize/3;
 	$('.menu').animate( { scrollLeft: currentPosition}, scrollDuration);
 });
 
 // scroll to right
 $(leftPaddle).on('click', function() {
-    currentPosition -= menuWrapperSize;
+    currentPosition -= menuWrapperSize - menuWrapperSize/3;
 	$('.menu').animate( { scrollLeft: currentPosition }, scrollDuration);
 });

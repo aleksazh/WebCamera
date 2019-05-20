@@ -1,4 +1,4 @@
-.canvas-big, video {
+.canvas-big {
     box-shadow: 0px 0px 40px 0px rgba(0,0,0,0.75);
 }
 td {
@@ -38,6 +38,8 @@ td {
 }
 .menu canvas:hover {
   background-color: rgb(122, 122, 122);
+  position: relative;
+  top: 0px;
 }
 body {
 	margin: 3em;
@@ -45,7 +47,8 @@ body {
 .menu-wrapper {
 	position: relative;
 	max-width: 640px;
-	height: 100px;
+  /*height: 98px;*/
+  height: 110px;
 	margin: 1em auto;
 	overflow-x: hidden;
 	overflow-y: hidden;
@@ -66,6 +69,11 @@ body {
   height: 100%;
   box-sizing: border-box;
 }
+.item span{
+  height: 30px;
+  vertical-align: bottom;
+  margin: left;
+}
 .paddle {
 	position: absolute;
 	top: 0;
@@ -78,15 +86,15 @@ body {
 	right: 0;
 }
 .left-paddle span{
-  position:relative; 
-  bottom:10px;
+  position: relative;
+  bottom: 18px;
   font-size: 100px;
   line-height: 100px;
   color: gray;
 }
 .right-paddle span{
-  position:relative; 
-  bottom:10px;
+  position: relative;
+  bottom: 18px;
   font-size: 100px;
   line-height: 100px;
   color: gray;

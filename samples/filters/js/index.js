@@ -25,9 +25,6 @@ let dstC1Small = null;
 let dstC3Small = null;
 let dstC4Small = null;
 
-let maxIter = 100;
-let count = maxIter;
-
 function startVideoProcessing() {
   src = new cv.Mat(height, width, cv.CV_8UC4);
   dstC1 = new cv.Mat(height, width, cv.CV_8UC1);
@@ -270,6 +267,7 @@ function processVideo() {
   cv.imshow('canvasOutput', result);
   lastFilter = controls.filter;
 
+  srcSmall.delete();
   srcSmall = src.clone();
   let smallSize = new cv.Size(smallWidth, smallHeight);
   cv.resize(srcSmall, srcSmall, smallSize, 0, 0, cv.INTER_CUBIC);
@@ -292,11 +290,8 @@ function processVideo() {
   cv.imshow('backprojection', backprojection(srcSmall, dstC1Small, dstC3Small));
   cv.imshow('morphology', morphology(srcSmall, dstC3Small, dstC4Small));
 
-  //  count = 0;
-  //}
-  //++count;
 
-
+  
   requestAnimationFrame(processVideo);
 }
 
@@ -443,9 +438,6 @@ function initUI() {
   };
   inRange.add(controls, 'inRangeLow', 0, 255, 1).name('lower boundary');
   inRange.add(controls, 'inRangeHigh', 0, 255, 1).name('higher boundary');
-
-  // let geometricTransformations = gui.addFolder('Geometric Transformations');
-  // TODO
 
   let thresholding = gui.addFolder('Thresholding');
 

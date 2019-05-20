@@ -22,57 +22,57 @@
             <span>Current Filter: </span><span id="filterName">No Filter</span>
           </div>
         </td>
-        <td>
-          <div>Select Filter:</div>
-        </td>
       </tr>
       <tr>
-        <td class="cell-top">
+        <td>
           <canvas id="canvasOutput" class="canvas-big" width="640" height="480"></canvas>
-        </td>
-        <td class="cell-top">
-          <div id="guiContainer"></div>
         </td>
       </tr>
       <tr>
         <td>
           <div class="menu-wrapper">
             <div id="filterMenu" class="menu">
-              <canvas id="passThrough" class="item">No Filter</canvas>
-              <canvas id="gray" class="item">Gray</canvas>
-              <canvas id="hsv" class="item">HSV</canvas>
-              <!--<canvas id="inRange" class="item">In Range</canvas>-->
-              <canvas id="threshold" class="item">Threshold</canvas>
-              <canvas id="adaptiveThreshold" class="item">Adaptive Threshold</canvas>
-              <canvas id="gaussianBlur" class="item">Gaussian Blurring</canvas>
-              <canvas id="medianBlur" class="item">Median Blurring</canvas>
-              <canvas id="bilateralFilter" class="item">Bilateral Filtering</canvas>
-              <canvas id="morphology" class="item">Morphology</canvas>
-              <canvas id="sobel" class="item">Sobel Derivatives</canvas>
-              <canvas id="scharr" class="item">Scharr Derivatives</canvas>
-              <canvas id="laplacian" class="item">Laplacian Derivatives</canvas>
-              <canvas id="canny" class="item">Canny Edge Detection</canvas>
-              <!--<canvas id="contours" class="item">Contours</canvas>-->
-              <canvas id="calcHist" class="item">Calculation</canvas>
-              <canvas id="equalizeHist" class="item">Equalization</canvas>
-              <canvas id="backprojection" class="item">Backprojection</canvas>
+              <div class="item"><canvas id="passThrough"></canvas><span>No Filter</span></div>
+              <div class="item"><canvas id="gray"></canvas><span>Gray</span></div>
+              <div class="item"><canvas id="hsv"></canvas><span>HSV</span></div>
+              <!--<div class="item"><canvas id="inRange"></canvas><span>In Range</span></div>-->
+              <div class="item"><canvas id="threshold"></canvas><span>Threshold</span></div>
+              <div class="item"><canvas id="adaptiveThreshold"></canvas><span>Adaptive Threshold</span></div>
+              <div class="item"><canvas id="gaussianBlur"></canvas><span>Gaussian Blurring</span></div>
+              <div class="item"><canvas id="medianBlur"></canvas><span>Median Blurring</span></div>
+              <div class="item"><canvas id="bilateralFilter"></canvas><span>Bilateral Filtering</span></div>
+              <div class="item"><canvas id="morphology"></canvas><span>Morphology</span></div>
+              <div class="item"><canvas id="sobel"></canvas><span>Sobel Derivatives</span></div>
+              <div class="item"><canvas id="scharr"></canvas><span>Scharr Derivatives</span></div>
+              <div class="item"><canvas id="laplacian"></canvas><span>Laplacian Derivatives</span></div>
+              <div class="item"><canvas id="canny"></canvas><span>Canny Edge Detection</span></div>
+              <!--<div class="item"><canvas id="contours"></canvas><span>Contours</span></div>-->
+              <div class="item"><canvas id="calcHist"></canvas><span>Calculation</span></div>
+              <div class="item"><canvas id="equalizeHist"></canvas><span>Equalization</span></div>
+              <div class="item"><canvas id="backprojection"></canvas><span>Backprojection</span></div>
             </div>
             <div class="paddles">
               <button class="left-paddle paddle hidden">
-                <span>
-                  &#8249;
-                </span>
+                <span>&#8249;</span>
               </button>
               <button class="right-paddle paddle">
-                <span>
-                  &#8250;
-                </span>
+                <span>&#8250;</span>
               </button>
               </button>
             </div>
           </div>
         </td>
-        <td></td>
+      </tr>
+      <tr>
+        <td>
+          <br>
+          <br>
+          <br>
+          <br>
+          <br>
+          <br>
+          <div id="guiContainer"></div>
+        </td>
       </tr>
     </table>
     <div>
