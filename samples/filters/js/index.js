@@ -13,8 +13,6 @@ let video = document.getElementById('videoInput');
 let smallVideo = document.getElementById('smallVideoInput');
 let vc = null;
 
-let container = document.getElementById('container');
-
 let lastFilter = '';
 let src = null;
 let dstC1 = null;
@@ -664,7 +662,7 @@ function initUI() {
 function startCamera() {
   if (!streaming) {
     utils.clearError();
-    utils.startCamera(onVideoStarted, 'videoInput');
+    utils.startCamera('vga', onVideoStarted, 'videoInput');
   } else {
     utils.stopCamera();
     onVideoStopped();
