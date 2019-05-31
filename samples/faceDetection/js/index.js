@@ -17,6 +17,8 @@ let frameBGR = null;
 let classifier = null;
 let ageNet = null;
 let genderNet = null;
+let gender = "";
+let age = "";
 
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'classifiers/haarcascade_frontalface_default.xml';
@@ -38,6 +40,29 @@ const color = [0, 255, 255, 255];
 const prototxtWidth = 227;
 const prototxtHeight = 227;
 
+function detectGender(face) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      let faceRect = new cv.Rect(face.x, face.y, face.width, face.height);
+      let faceFrame = frameBGR.roi(faceRect);
+      let blob = cv.blobFromImage(faceFrame, 1.0, // scalefactor=1.0
+        { width: prototxtWidth, height: prototxtHeight },
+        MODEL_MEAN_VALUES, false, false); // swapRB=false, crop=false
+      genderNet.setInput(blob);
+      let genderPreds = genderNet.forward();
+      let result = genderList[
+        genderPreds.data32F.indexOf(Math.max(...genderPreds.data32F))];
+      resolve(result);
+      faceFrame.delete();
+      genderPreds.delete();
+      blob.delete();
+    }, 1000);
+  });
+}
+
+async function asyncDetectGender(face) {
+  gender = await detectGender(face);
+}
 
 function startVideoProcessing() {
   stats = new Stats();
@@ -81,21 +106,12 @@ function processVideo() {
       1.1, 3); // scaleFactor=1.1, minNeighbors=3
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
-      let faceRect = new cv.Rect(face.x, face.y, face.width, face.height);
-      let faceFrame = frameBGR.roi(faceRect);
-      let blob = cv.blobFromImage(faceFrame, 1.0, // scalefactor=1.0
-        { width: prototxtWidth, height: prototxtHeight },
-        MODEL_MEAN_VALUES, false, false); // swapRB=false, crop=false
-      // detect gender
-      genderNet.setInput(blob);
-      let genderPreds = genderNet.forward();
-      let gender = genderList[
-        genderPreds.data32F.indexOf(Math.max(...genderPreds.data32F))];
+      asyncDetectGender(face);
       // detect age
-      ageNet.setInput(blob);
-      let agePreds = ageNet.forward();
-      let age = ageList[
-        agePreds.data32F.indexOf(Math.max(...agePreds.data32F))];
+      // ageNet.setInput(blob);
+      // let agePreds = ageNet.forward();
+      // let age = ageList[
+      //  agePreds.data32F.indexOf(Math.max(...agePreds.data32F))];
       // add label with gender and age to face
       let label = gender + " " + age;
       cv.putText(dst, label, { x: face.x, y: face.y - 10 },
@@ -106,10 +122,10 @@ function processVideo() {
       let point2 = new cv.Point(face.x + face.width, face.y + face.height);
       cv.rectangle(dst, point1, point2, color);
 
-      faceFrame.delete();
-      genderPreds.delete();
-      agePreds.delete();
-      blob.delete();
+      //faceFrame.delete();
+      //genderPreds.delete();
+      //agePreds.delete();
+      //blob.delete();
     }
     cv.imshow('canvasOutput', dst);
     // schedule the next processing
