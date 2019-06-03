@@ -1,10 +1,10 @@
-importScripts('../../filters/js/utils.js')
+importScripts('../../filters/js/utils.js', '../../../build/wasm/opencv.js')
 
-let utils = new Utils('errorMessage');
+//let utils = new Utils('errorMessage');
 
 const FPS = 30;
-let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
-let video = document.getElementById('videoInput');
+let resolution = 'vga'; // !!!! TODO
+let video;
 
 let streaming = false;
 let src = null;
@@ -37,6 +37,13 @@ const MODEL_MEAN_VALUES = [78.4263377603, 87.7689143744, 114.895847746, 0];
 const prototxtWidth = 227;
 const prototxtHeight = 227;
 const color = [0, 255, 255, 255];
+
+// listen to messages from main thread
+self.onmessage = function (e) {
+  serializedVideo = e.data;
+  domparser = new DOMParser ();
+  video = domparser.parseFromString (serializedVideo, "text/xml");
+}
 
 function startVideoProcessing() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
@@ -101,19 +108,10 @@ function processVideo() {
     let delay = 1000 / FPS - (Date.now() - begin);
     setTimeout(processVideo, delay);
   } catch (err) {
-    utils.printError(err);
+    //utils.printError(err);
   }
 };
 
-function startCamera() {
-  if (!streaming) {
-    utils.clearError();
-    utils.startCamera(resolution, onVideoStarted, 'videoInput');
-  } else {
-    utils.stopCamera();
-    onVideoStopped();
-  }
-}
 
 function onVideoStarted() {
   streaming = true;
@@ -122,34 +120,77 @@ function onVideoStarted() {
   startVideoProcessing();
 }
 
-function onVideoStopped() {
+function onVideoStopped(stream) {
+  if (video) {
+    video.pause();
+    video.srcObject = null;
+    video.removeEventListener('canplay', onVideoCanPlay);
+  }
+  if (stream) {
+    stream.getVideoTracks()[0].stop();
+  }
   streaming = false;
 }
 
-document.getElementById('status').innerHTML = 'Loading OpenCV...';
-utils.loadOpenCv(() => {
-  document.getElementById('status').innerHTML =
-    'Loading deploy_gender.prototxt...';
-  utils.createFileFromUrl(genderProtoPath, genderProtoUrl, () => {
-    document.getElementById('status').innerHTML =
-      'Loading gender_net.caffemodel';
-    utils.createFileFromUrl(genderModelPath, genderModelUrl, () => {
-      // read gender network into genderNet
-      genderNet = cv.readNetFromCaffe(genderProtoPath, genderModelPath);
-      document.getElementById('status').innerHTML =
-        'Loading deploy_age.prototxt';
-      utils.createFileFromUrl(ageProtoPath, ageProtoUrl, () => {
-        document.getElementById('status').innerHTML =
-          'Loading age_net.caffemodel';
-        utils.createFileFromUrl(ageModelPath, ageModelUrl, () => {
-          // read age network into ageNet
-          ageNet = cv.readNetFromCaffe(ageProtoPath, ageModelPath);
-          document.getElementById('status').innerHTML =
-            'Loading haarcascade_frontalface_default.xml';
-          utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-            document.getElementById('status').innerHTML = '';
-            startCamera();
-          });
+function startCamera (resolution) {
+  if (!streaming) {
+    const constraints = {
+      'qvga': { width: { exact: 320 }, height: { exact: 240 } },
+      'vga': { width: { exact: 640 }, height: { exact: 480 } }
+    };
+    let videoConstraint = constraints[resolution];
+    if (!videoConstraint) {
+      videoConstraint = true;
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: false })
+      .then(function (stream) {
+        video.srcObject = stream;
+        video.play();
+        //self.video = video;
+        //self.stream = stream;
+        //self.onCameraStartedCallback = callback;
+        video.addEventListener('canplay', onVideoCanPlay, false);
+      })
+      .catch(function (err) {
+        //self.printError('Camera Error: ' + err.name + ' ' + err.message);
+      });
+    onVideoStarted();
+
+  } else {
+    onVideoStopped(video.srcObject);
+  }
+};
+
+function createFileFromUrl (path, url, callback) {
+  let request = new XMLHttpRequest();
+  request.open('GET', url, true);
+  request.responseType = 'arraybuffer';
+  request.onload = function (ev) {
+    if (request.readyState === 4) {
+      if (request.status === 200) {
+        let data = new Uint8Array(request.response);
+        cv.FS_createDataFile('/', path, data, true, false, false);
+        callback();
+      }
+      //else {
+      //  self.printError('Failed to load ' + url + ' status: ' + request.status);
+      //}
+    }
+  };
+  request.send();
+};
+
+createFileFromUrl(genderProtoPath, genderProtoUrl, () => {
+  createFileFromUrl(genderModelPath, genderModelUrl, () => {
+    // read gender network into genderNet
+    genderNet = cv.readNetFromCaffe(genderProtoPath, genderModelPath);
+    createFileFromUrl(ageProtoPath, ageProtoUrl, () => {
+      createFileFromUrl(ageModelPath, ageModelUrl, () => {
+        // read age network into ageNet
+        ageNet = cv.readNetFromCaffe(ageProtoPath, ageModelPath);
+        createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+          startCamera(resolution);
         });
       });
     });

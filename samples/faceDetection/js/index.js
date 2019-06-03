@@ -17,7 +17,7 @@ let frameBGR = null;
 let classifier = null;
 let genderNet = null;
 let ageNet = null;
-let gender;
+let gender = "";
 let age;
 let genderWorker;
 
@@ -55,8 +55,11 @@ function startVideoProcessing() {
   classifier.load(faceDetectionPath);
   // create worker for gender detection
   genderWorker = new Worker("js/genderWorker.js");
+  let serializer = new XMLSerializer();
+  let serializedVideo = serializer.serializeToString(video);
+  genderWorker.postMessage(serializedVideo);
   genderWorker.onmessage = function (e) {
-    gender = e.data;
+    gender = e.data[0];
   }
   // schedule the first processing
   setTimeout(processVideo, 0);
@@ -94,12 +97,7 @@ function processVideo() {
         agePreds.data32F.indexOf(Math.max(...agePreds.data32F))];
       // add label with gender and age to face
       let label = gender + " " + age;*/
-      let label;
-      if (typeof gender == "undefined") {
-        label = "NaN";
-      } else {
-        label = gender;
-      }
+      let label = gender;
       cv.putText(dst, label, { x: face.x, y: face.y - 10 },
         cv.FONT_HERSHEY_SIMPLEX,
         0.6, color, 2, cv.LINE_4); // fontScale=0.6, thickness=2
@@ -143,6 +141,7 @@ function onVideoStarted() {
 function onVideoStopped() {
   streaming = false;
   canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+  genderWorker.terminate();
 }
 
 document.getElementById('status').innerHTML = 'Loading OpenCV...';
