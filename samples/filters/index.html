@@ -16,7 +16,7 @@
 
   <div class="canvas-wrapper">
     <span id="filterName" class="current-filter-name">No Filter</span>
-    <canvas id="canvasOutput" class="canvas-big centered" onclick="showOrHideSettings(controls.filter)"></canvas>
+    <canvas id="canvasOutput" class="canvas-big centered" onclick="showOrHideSettings()"></canvas>
     <div class="settings-wrapper">
       <div id="threshold-settings" class="settings hidden"><label for="threshold-value">Threshold value:
           <output id="threshold-value-output"></output>
@@ -108,7 +108,7 @@
           <div><canvas id="gray" class="small-canvas"></canvas></div>Gray
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="hsv" class="small-canvas" onclick="setFilter('hsv')"></canvas></div>HSV
+          <div><canvas id="hsv" class="small-canvas"></canvas></div>HSV
         </li>
         <li class="card" data-target="card">
           <div><canvas id="threshold" class="small-canvas"></canvas></div>Thresholding

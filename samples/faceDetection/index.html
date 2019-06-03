@@ -5,18 +5,20 @@
   <meta charset="utf-8">
   <title>Face Detection</title>
   <link href="../filters/css/style.css" rel="stylesheet" type="text/css" />
-  <link href="css/style.css" rel="stylesheet" type="text/css" />
   <link href="../filters/css/filters-settings.css" rel="stylesheet" type="text/css" />
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
   <h1 class="header centered">Face Detection 🕵️‍♂️</h1>
   <p class="err" id="errorMessage"></p>
-  <p id="status" class="centered"></p>
   <div class="canvas-wrapper">
     <canvas id="canvasOutput" class="centered"></canvas>
+    <div class="stats-settings">
+      <label for="hideStats">Hide statistics</label>
+      <input id="hideStats" type="checkbox" checked>
+    </div>
   </div>
-  <p id="status"></p>
   <video class="hidden" id="videoInput"></video>
 
   <script src="../libs/adapter-latest.js" type="text/javascript"></script>

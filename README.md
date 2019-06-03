@@ -20,4 +20,4 @@ Try out the demos (Chrome 72+):
 ![](panTilt.gif)
 
 
-<img src="filtersDemo.gif" width="541" height="555" />
+<img src="filtersDemo.gif" width="654" height="786" />

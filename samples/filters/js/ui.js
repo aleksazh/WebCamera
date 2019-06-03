@@ -79,7 +79,7 @@ function closeFilterOptions(filter) {
   }
 }
 
-function showOrHideSettings(filter) {
+function showOrHideSettings() {
   if (settingsOnScreen) {
     closeFilterOptions(controls.filter);
   } else {
@@ -87,6 +87,7 @@ function showOrHideSettings(filter) {
   }
 }
 
+// add onclick event listeners for menu canvases
 for (let filter in filters) {
   document.getElementById(filter).addEventListener("click", function () {
     setFilter(filter);
