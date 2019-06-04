@@ -19,7 +19,6 @@ let maskInv = null;
 let imgBg = null;
 let imgFg = null;
 let sum = null;
-let dst = null;
 
 statsCheckbox.addEventListener("change", function () {
   statsCheckbox.checked
@@ -43,7 +42,6 @@ function startVideoProcessing() {
   imgBg = new cv.Mat();
   imgFg = new cv.Mat();
   sum = new cv.Mat();
-  dst = new cv.Mat();
 
   stats.showPanel(0);
   document.body.appendChild(stats.domElement);
@@ -74,50 +72,36 @@ function processVideo() {
       imgBg.delete();
       imgFg.delete();
       sum.delete();
-      dst.delete();
       return;
     }
     stats.begin();
     let begin = Date.now();
     // start processing
     cap.read(src);
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     // detect faces
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     classifier.detectMultiScale(gray, faces,
-      1.1, 3); // scaleFactor=1.1, minNeighbors=3
+     1.1, 3); // scaleFactor=1.1, minNeighbors=3
+    for (let i = 0; i < faces.size(); ++i) {
+     let face = faces.get(i);
+      //draw face
+      let point1 = new cv.Point(face.x, face.y);
+      let point2 = new cv.Point(face.x + face.width, face.y + face.height);
+      //cv.rectangle(src, point1, point2, color);
+    }
 
     // draw hat
-
-    let rect = new cv.Rect(0, 0, 100, 80);
-    let roi = src.roi(rect);
-
-    let dsize = new cv.Size(100, 80);
-    cv.resize(imgHat, imgHat, dsize, 0, 0, cv.INTER_LINEAR);
-
+    cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
+    let roi = src.roi(new cv.Rect(0, 0, 100, 100));
     cv.cvtColor(imgHat, mask, cv.COLOR_RGBA2GRAY);
     cv.threshold(mask, mask, 0, 255, cv.THRESH_BINARY);
     cv.bitwise_not(mask, maskInv);
-
     cv.bitwise_and(roi, roi, imgBg, maskInv);
     cv.bitwise_and(imgHat, imgHat, imgFg, mask);
     cv.add(imgBg, imgFg, sum);
+    sum.copyTo(src.rowRange(0, 100).colRange(0, 100));
+    cv.imshow('canvasOutput', src);
 
-    dst = src.clone();
-    for (let i = 0; i < imgHat.rows; i++) {
-      for (let j = 0; j < imgHat.cols; j++) {
-        dst.ucharPtr(i, j)[0] = sum.ucharPtr(i, j)[0];
-      }
-    }
-
-    //for (let i = 0; i < faces.size(); ++i) {
-    //  let face = faces.get(i);
-      // draw face
-      // let point1 = new cv.Point(face.x, face.y);
-      // let point2 = new cv.Point(face.x + face.width, face.y + face.height);
-      // cv.rectangle(src, point1, point2, color);
-    //}
-    cv.imshow('canvasOutput', dst);
-    //cv.imshow('canvasOutput', imgHat);
     // schedule the next processing
     let delay = 1000 / FPS - (Date.now() - begin);
     stats.end();
