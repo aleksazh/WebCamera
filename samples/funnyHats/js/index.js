@@ -13,13 +13,11 @@ let faces = null;
 let classifier = null;
 let imgHat;
 let mask = null;
-let rgbaVector = null;
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
 
 statsCheckbox.addEventListener("change", function () {
-  statsCheckbox.checked
-  if (document.getElementById('hideStats').checked) {
+  if (statsCheckbox.checked) {
     stats.domElement.classList.add("hidden");
   } else {
     stats.domElement.classList.remove("hidden");
@@ -34,7 +32,7 @@ function startVideoProcessing() {
   cap = new cv.VideoCapture(video);
   faces = new cv.RectVector();
   classifier = new cv.CascadeClassifier();
-  rgbaVector = new cv.MatVector();
+  let rgbaVector = new cv.MatVector();
 
   stats.showPanel(0);
   document.body.appendChild(stats.domElement);
@@ -47,7 +45,6 @@ function startVideoProcessing() {
 
   // load hat
   imgHat = cv.imread('hat1');
-  cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
   // create mask from alpha channel
   cv.split(imgHat, rgbaVector);
   mask = rgbaVector.get(3).clone();
@@ -79,7 +76,20 @@ function processVideo() {
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
       // draw hat
-      imgHat.copyTo(src.rowRange(face.y-imgHat.rows, face.y).colRange(face.x, imgHat.cols+face.x), mask);
+      cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
+      cv.resize(mask, mask, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
+      let y1 = face.y - imgHat.rows + Math.round(0.2 * face.height);
+      let y2 = face.y + Math.round(0.2 * face.height);
+      let x = imgHat.cols + face.x;
+      if (x < video.width && y1 >= 0) {
+        imgHat.copyTo(src.rowRange(y1, y2).colRange(face.x, x), mask);
+      } else if (y1 < 0) {
+        let hatRoi = imgHat.roi(new cv.Rect(0, -y1, 100, imgHat.cols + y1));
+        let maskRoi = mask.roi(new cv.Rect(0, -y1, 100, mask.cols + y1));
+        hatRoi.copyTo(src.rowRange(0, y2).colRange(face.x, x), maskRoi);
+        hatRoi.delete(); maskRoi.delete();
+      }
+      //imgHat.copyTo(src.rowRange(0, imgHat.rows).colRange(0, imgHat.cols), mask);
     }
     // draw output video
     cv.imshow('canvasOutput', src);
