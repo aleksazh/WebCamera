@@ -11,14 +11,11 @@ let src = null;
 let cap = null;
 let faces = null;
 let classifier = null;
-const faceDetectionPath = 'haarcascade_frontalface_default.xml';
-const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
 let imgHat;
 let mask = null;
-let maskInv = null;
-let imgBg = null;
-let imgFg = null;
-let sum = null;
+let rgbaVector = null;
+const faceDetectionPath = 'haarcascade_frontalface_default.xml';
+const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
 
 statsCheckbox.addEventListener("change", function () {
   statsCheckbox.checked
@@ -37,11 +34,7 @@ function startVideoProcessing() {
   cap = new cv.VideoCapture(video);
   faces = new cv.RectVector();
   classifier = new cv.CascadeClassifier();
-  mask = new cv.Mat();
-  maskInv = new cv.Mat();
-  imgBg = new cv.Mat();
-  imgFg = new cv.Mat();
-  sum = new cv.Mat();
+  rgbaVector = new cv.MatVector();
 
   stats.showPanel(0);
   document.body.appendChild(stats.domElement);
@@ -55,10 +48,10 @@ function startVideoProcessing() {
   // load hat
   imgHat = cv.imread('hat1');
   cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
-  cv.cvtColor(imgHat, mask, cv.COLOR_RGBA2GRAY);
-  cv.threshold(mask, mask, 0, 255, cv.THRESH_BINARY);
-  cv.bitwise_not(mask, maskInv);
-  cv.bitwise_and(imgHat, imgHat, imgFg, mask);
+  // create mask from alpha channel
+  cv.split(imgHat, rgbaVector);
+  mask = rgbaVector.get(3).clone();
+  rgbaVector.delete();
 
   // schedule the first processing
   setTimeout(processVideo, 0);
@@ -73,10 +66,6 @@ function processVideo() {
       faces.delete();
       classifier.delete();
       mask.delete();
-      maskInv.delete();
-      imgBg.delete();
-      imgFg.delete();
-      sum.delete();
       return;
     }
     stats.begin();
@@ -86,20 +75,13 @@ function processVideo() {
     // detect faces
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     classifier.detectMultiScale(gray, faces,
-     1.1, 3); // scaleFactor=1.1, minNeighbors=3
+      1.1, 3); // scaleFactor=1.1, minNeighbors=3
     for (let i = 0; i < faces.size(); ++i) {
-     let face = faces.get(i);
-      //draw face
-      let point1 = new cv.Point(face.x, face.y);
-      let point2 = new cv.Point(face.x + face.width, face.y + face.height);
-      //cv.rectangle(src, point1, point2, color);
+      let face = faces.get(i);
+      // draw hat
+      imgHat.copyTo(src.rowRange(face.y-imgHat.rows, face.y).colRange(face.x, imgHat.cols+face.x), mask);
     }
-
-    // draw hat
-    let roi = src.roi(new cv.Rect(0, 0, 100, 100));
-    cv.bitwise_and(roi, roi, imgBg, maskInv);
-    cv.add(imgBg, imgFg, sum);
-    sum.copyTo(src.rowRange(0, 100).colRange(0, 100));
+    // draw output video
     cv.imshow('canvasOutput', src);
 
     // schedule the next processing
