@@ -54,6 +54,11 @@ function startVideoProcessing() {
 
   // load hat
   imgHat = cv.imread('hat1');
+  cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
+  cv.cvtColor(imgHat, mask, cv.COLOR_RGBA2GRAY);
+  cv.threshold(mask, mask, 0, 255, cv.THRESH_BINARY);
+  cv.bitwise_not(mask, maskInv);
+  cv.bitwise_and(imgHat, imgHat, imgFg, mask);
 
   // schedule the first processing
   setTimeout(processVideo, 0);
@@ -91,13 +96,8 @@ function processVideo() {
     }
 
     // draw hat
-    cv.resize(imgHat, imgHat, new cv.Size(100, 100), 0, 0, cv.INTER_LINEAR);
     let roi = src.roi(new cv.Rect(0, 0, 100, 100));
-    cv.cvtColor(imgHat, mask, cv.COLOR_RGBA2GRAY);
-    cv.threshold(mask, mask, 0, 255, cv.THRESH_BINARY);
-    cv.bitwise_not(mask, maskInv);
     cv.bitwise_and(roi, roi, imgBg, maskInv);
-    cv.bitwise_and(imgHat, imgHat, imgFg, mask);
     cv.add(imgBg, imgFg, sum);
     sum.copyTo(src.rowRange(0, 100).colRange(0, 100));
     cv.imshow('canvasOutput', src);
