@@ -26,28 +26,38 @@ function initUI() {
   stats.domElement.style.top = '0px';
   stats.domElement.classList.add("hidden");
 
-  // load hats
   let rgbaVector = new cv.MatVector();
   for (let i = 0; i < hatsNum; i++) {
+    // create hat node in menu
+    let liNode = document.createElement("li");
+    liNode.classList.add("card");
+    liNode.setAttribute('data-target', 'card');
+    let divNode = document.createElement("div");
+    let canvasNode = document.createElement("canvas");
+    canvasNode.classList.add("small-canvas");
+    divNode.appendChild(canvasNode);
+    liNode.appendChild(divNode);
+    document.getElementsByClassName('carousel')[0].appendChild(liNode);
+    // add event listener to menu canvas
+    canvasNode.addEventListener("click", function () {
+      currentHat = i;
+    });
+    // load hat
     hatSrc = cv.imread(`hat${i}`);
     // create mask from alpha channel
     cv.split(hatSrc, rgbaVector);
     mask = rgbaVector.get(3).clone();
-    hats.push({name: i, src: hatSrc.clone(), mask: mask.clone()});
+    hats.push({src: hatSrc.clone(), mask: mask.clone()});
 
-    cv.resize(hatSrc, hatSrc, new cv.Size(320, 240), 0, 0, cv.INTER_LINEAR);
-    cv.imshow(smallVanvases[i], hatSrc);
+    cv.imshow(canvasNode, hatSrc);
     hatSrc.delete(); mask.delete();
   }
   rgbaVector.delete();
-
-}
-
-// add onclick event listeners for menu canvases
-for (let i = 0; i < hatsNum; i++) {
-  smallVanvases[i].addEventListener("click", function () {
-    currentHat = i;
-  });
+  // now we have canvases and can create menu
+  let menuScript = document.createElement('script');
+  menuScript.type = 'text/javascript';
+  menuScript.src = '../filters/js/menu.js';
+  document.body.appendChild(menuScript);
 }
 
 function deleteHats() {

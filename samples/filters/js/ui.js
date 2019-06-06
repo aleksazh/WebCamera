@@ -216,8 +216,8 @@ function initUI() {
   };
 }
 
-let vgaWidth = 640;
-let gvgaWidth = 320;
+const VGA_WIDTH = 640;
+const GVGA_WIDTH = 320;
 
 function resizeElements() {
   // carousel
@@ -240,7 +240,7 @@ function resizeElements() {
     smallCanvases[i].style.height = `${parseInt(height / 5)}px`;
     smallCanvases[i].style.width = `${parseInt(width / 5)}px`;
     cards[i].style.width = `${parseInt(width / 5 + 2 * scPadding)}px`;
-    if (width < vgaWidth) {
+    if (width < VGA_WIDTH) {
       cards[i].style.fontSize = `16px`;
     }
   }
@@ -259,21 +259,21 @@ function resizeElements() {
 window.onresize = function () {
   let buttonWidth =
     document.querySelector("[data-action='slideRight']").offsetWidth;
-  let windowConstraintVGA = vgaWidth + 2 * buttonWidth;
-  let windowConstraintGVGA = gvgaWidth + 2 * buttonWidth;
-  if (window.innerWidth < windowConstraintVGA && width == vgaWidth) { // vga
+  let windowConstraintVGA = VGA_WIDTH + 2 * buttonWidth;
+  let windowConstraintGVGA = GVGA_WIDTH + 2 * buttonWidth;
+  if (window.innerWidth < windowConstraintVGA && width == VGA_WIDTH) { // vga
     document.getElementsByClassName("carousel")[0].style.width =
       `${window.innerWidth - 3 * buttonWidth}px`;
   } else if (window.innerWidth > windowConstraintVGA &&
-             width == vgaWidth) { // vga
+             width == VGA_WIDTH) { // vga
     document.getElementsByClassName("carousel")[0].style.width =
       `${width - 2 * buttonWidth}px`;
   } else if (window.innerWidth < windowConstraintGVGA &&
-             width == gvgaWidth) {// gvga
+             width == GVGA_WIDTH) {// gvga
     document.getElementsByClassName("carousel")[0].style.width =
       `${window.innerWidth - 3 * buttonWidth}px`;
   } else if (window.innerWidth > windowConstraintGVGA &&
-             width == gvgaWidth) {// gvga
+             width == GVGA_WIDTH) {// gvga
     document.getElementsByClassName("carousel")[0].style.width =
       `${width - 2 * buttonWidth}px`;
   }
