@@ -19,54 +19,63 @@
   <div class="centered">
     <div class="carousel-wrapper">
       <button data-action="slideLeft" class="menu-button">&#8249;</button>
-      <ul class="carousel" data-target="carousel" id="filterMenu">
+      <ul class="carousel" data-target="carousel">
         <li class="card" data-target="card">
-          <div><canvas id="passThrough" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="gray" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="hsv" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="threshold" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="adaptiveThreshold" class="small-canvas"></canvas>
+          <div><canvas class="small-canvas"></canvas>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="gaussianBlur" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="medianBlur" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="bilateralFilter" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="morphology" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="sobel" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="scharr" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="laplacian" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="canny" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="calcHist" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="equalizeHist" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
         <li class="card" data-target="card">
-          <div><canvas id="backprojection" class="small-canvas"></canvas></div>
+          <div><canvas class="small-canvas"></canvas></div>
+        </li>
+        <li class="card" data-target="card">
+          <div><canvas class="small-canvas"></canvas></div>
+        </li>
+        <li class="card" data-target="card">
+          <div><canvas class="small-canvas"></canvas></div>
+        </li>
+        <li class="card" data-target="card">
+          <div><canvas class="small-canvas"></canvas></div>
         </li>
       </ul>
       <button data-action="slideRight" class="menu-button">&#8250;</button>
@@ -77,6 +86,7 @@
     <input id="hideStats" type="checkbox" checked>
   </div>
   <video class="hidden" id="videoInput"></video>
+  <img id="hat0" class="hidden" src="resources/0.png"/>
   <img id="hat1" class="hidden" src="resources/1.png"/>
   <img id="hat2" class="hidden" src="resources/2.png"/>
   <img id="hat3" class="hidden" src="resources/3.png"/>
@@ -95,12 +105,12 @@
   <img id="hat16" class="hidden" src="resources/16.png"/>
   <img id="hat17" class="hidden" src="resources/17.png"/>
   <img id="hat18" class="hidden" src="resources/18.png"/>
-  <img id="hat19" class="hidden" src="resources/19.png"/>
 
   <script src="../libs/adapter-latest.js" type="text/javascript"></script>
   <script src="../libs/stats.min.js" type="text/javascript"></script>
   <script src="../filters/js/utils.js" type="text/javascript"></script>
   <script src="../filters/js/menu.js" type="text/javascript"></script>
+  <script src="js/ui.js" type="text/javascript"></script>
   <script src="js/index.js" type="text/javascript"></script>
 </body>
 
