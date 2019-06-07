@@ -2,11 +2,8 @@ let stats = null;
 let statsCheckbox = document.getElementById('hideStats');
 
 let hats = [];
-let hatSrc = null;
-let mask = null;
 let currentHat = 0;
 let hatsNum = document.getElementsByTagName('img').length;
-let smallVanvases = document.getElementsByClassName('small-canvas');
 
 
 statsCheckbox.addEventListener("change", function () {
@@ -27,6 +24,7 @@ function initUI() {
   stats.domElement.classList.add("hidden");
 
   let rgbaVector = new cv.MatVector();
+  let hatSrc;
   for (let i = 0; i < hatsNum; i++) {
     // load hat and read attributes
     hatSrc = cv.imread(`hat${i}`);
@@ -34,36 +32,38 @@ function initUI() {
     let scale = Number(img.dataset.scaleFactor);
     let yOffset = Number(img.dataset.yOffset);
     let name = img.dataset.name;
-    // create mask from alpha channel
+    let hatNode = createHatNode(name, i);
+    // split hat source to get mask from alpha channel
     cv.split(hatSrc, rgbaVector);
-    mask = rgbaVector.get(3).clone();
-    // create hat node in menu
-    let liNode = document.createElement("li");
-    liNode.classList.add("card");
-    liNode.setAttribute('data-target', 'card');
-    let divNode = document.createElement("div");
-    let canvasNode = document.createElement("canvas");
-    canvasNode.classList.add("small-canvas");
-    divNode.appendChild(canvasNode);
-    liNode.appendChild(divNode);
-    let liText = document.createTextNode(name);
-    liNode.appendChild(liText);
-    document.getElementsByClassName('carousel')[0].appendChild(liNode);
-    // add event listener to menu canvas
-    canvasNode.addEventListener("click", function () {
-      currentHat = i;
-    });
-    hats.push({name: name, src: hatSrc.clone(), mask: mask.clone(), scale: scale, yOffset: yOffset});
-
-    cv.imshow(canvasNode, hatSrc);
-    hatSrc.delete(); mask.delete();
+    hats.push({name: name, src: hatSrc.clone(),
+      mask: rgbaVector.get(3).clone(), scale: scale, yOffset: yOffset});
+    cv.imshow(hatNode, hatSrc);
   }
   rgbaVector.delete();
-  // now we have canvases and can create menu
+  // now we have canvases and can create scolling menu
   let menuScript = document.createElement('script');
   menuScript.type = 'text/javascript';
   menuScript.src = '../filters/js/menu.js';
   document.body.appendChild(menuScript);
+}
+
+function createHatNode(name, i) {
+  let liNode = document.createElement("li");
+  liNode.classList.add("card");
+  liNode.setAttribute('data-target', 'card');
+  let divNode = document.createElement("div");
+  let canvasNode = document.createElement("canvas");
+  canvasNode.classList.add("small-canvas");
+  divNode.appendChild(canvasNode);
+  liNode.appendChild(divNode);
+  let liText = document.createTextNode(name);
+  liNode.appendChild(liText);
+  document.getElementsByClassName('carousel')[0].appendChild(liNode);
+  // add event listener to menu canvas
+  canvasNode.addEventListener("click", function () {
+    currentHat = i;
+  });
+  return canvasNode;
 }
 
 function deleteHats() {
