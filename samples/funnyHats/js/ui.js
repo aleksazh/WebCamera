@@ -28,6 +28,15 @@ function initUI() {
 
   let rgbaVector = new cv.MatVector();
   for (let i = 0; i < hatsNum; i++) {
+    // load hat and read attributes
+    hatSrc = cv.imread(`hat${i}`);
+    let img = document.getElementById(`hat${i}`);
+    let scale = Number(img.dataset.scaleFactor);
+    let yOffset = Number(img.dataset.yOffset);
+    let name = img.dataset.name;
+    // create mask from alpha channel
+    cv.split(hatSrc, rgbaVector);
+    mask = rgbaVector.get(3).clone();
     // create hat node in menu
     let liNode = document.createElement("li");
     liNode.classList.add("card");
@@ -37,17 +46,14 @@ function initUI() {
     canvasNode.classList.add("small-canvas");
     divNode.appendChild(canvasNode);
     liNode.appendChild(divNode);
+    let liText = document.createTextNode(name);
+    liNode.appendChild(liText);
     document.getElementsByClassName('carousel')[0].appendChild(liNode);
     // add event listener to menu canvas
     canvasNode.addEventListener("click", function () {
       currentHat = i;
     });
-    // load hat
-    hatSrc = cv.imread(`hat${i}`);
-    // create mask from alpha channel
-    cv.split(hatSrc, rgbaVector);
-    mask = rgbaVector.get(3).clone();
-    hats.push({src: hatSrc.clone(), mask: mask.clone()});
+    hats.push({name: name, src: hatSrc.clone(), mask: mask.clone(), scale: scale, yOffset: yOffset});
 
     cv.imshow(canvasNode, hatSrc);
     hatSrc.delete(); mask.delete();
