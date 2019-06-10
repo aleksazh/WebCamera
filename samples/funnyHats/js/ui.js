@@ -51,14 +51,20 @@ function initUI() {
     document.getElementsByClassName('carousel')[0].appendChild(liNode);
     // add event listener to menu canvas
     canvasNode.addEventListener("click", function () {
+      hatSrc.delete(); mask.delete();
       currentHat = i;
+      hatSrc = hats[currentHat].src.clone();
+      mask = hats[currentHat].mask.clone();
     });
     hats.push({name: name, src: hatSrc.clone(), mask: mask.clone(), scale: scale, yOffset: yOffset});
 
     cv.imshow(canvasNode, hatSrc);
-    hatSrc.delete(); mask.delete();
   }
   rgbaVector.delete();
+  hatSrc.delete(); mask.delete();
+  // choose initial hat
+  hatSrc = hats[currentHat].src.clone();
+  mask = hats[currentHat].mask.clone();
   // now we have canvases and can create menu
   let menuScript = document.createElement('script');
   menuScript.type = 'text/javascript';
