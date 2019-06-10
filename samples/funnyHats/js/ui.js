@@ -56,7 +56,8 @@ function initUI() {
       hatSrc = hats[currentHat].src.clone();
       mask = hats[currentHat].mask.clone();
     });
-    hats.push({name: name, src: hatSrc.clone(), mask: mask.clone(), scale: scale, yOffset: yOffset});
+    hats.push({name: name, src: hatSrc.clone(), mask: mask.clone(),
+      scale: scale, yOffset: yOffset});
 
     cv.imshow(canvasNode, hatSrc);
   }
