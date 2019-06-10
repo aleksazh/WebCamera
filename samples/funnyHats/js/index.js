@@ -39,9 +39,11 @@ function calculateHatCoordinates(width, height, i) {
   cv.resize(hatSrc, hatDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
   cv.resize(mask, maskDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
   if (hatFrame[i].y1 > 0 && hatFrame[i].x2 < video.width && hatFrame[i].x1 >= 0) {
+    console.log("clone");
     hatFrame[i].src = hatDst.clone();
     hatFrame[i].mask = maskDst.clone();
   } else if (hatFrame[i].y1 === 0) {
+    console.log("roi");
     hatFrame[i].src = hatDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
     hatFrame[i].mask = maskDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
   }
@@ -66,14 +68,17 @@ function processVideo() {
       1.1, 3); // scaleFactor=1.1, minNeighbors=3
     // delete hats for old faces from hatFrame
     if (hatFrame.length > faces.size() && faces.size() > 0) {
+      console.log("delete", hatFrame.length, faces.size());
       for (let i = faces.size(); i < hatFrame.length; ++i) {
         hatFrame[i].src.delete();
         hatFrame[i].mask.delete();
       }
       hatFrame.length = faces.size();
+      console.log("delete2", hatFrame.length, faces.size());
     }
     // draw hats
     for (let i = 0; i < faces.size(); ++i) {
+      console.log("i", i, hatFrame.length, faces.size());
       let face = faces.get(i);
       let scaledWidth = parseInt(hats[currentHat].scale * face.width);
       let scaledHeight = parseInt(hats[currentHat].scale * face.height);
@@ -83,8 +88,6 @@ function processVideo() {
       let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
       let x2 = x1 + scaledWidth;
       if (y1 < 0) y1 = 0;
-      console.log("coord", x1, x2, y1, y2);
-      console.log("face", face.x, face.y, face.width, face.height);
       if (!hatFrame[i]) {
         hatFrame.push({ x1: x1, x2: x2, y1: y1, y2: y2 });
         calculateHatCoordinates(scaledWidth, scaledHeight, i);
@@ -100,11 +103,10 @@ function processVideo() {
         console.log("resize");
         hatFrame[i].src.delete();
         hatFrame[i].mask.delete();
-        hatFrame.pop();
-        hatFrame.push({ x1: x1, x2: x2, y1: y1, y2: y2 });
+        hatFrame.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2 });
         calculateHatCoordinates(scaledWidth, scaledHeight, i);
       }
-      console.log("hat", hatFrame[i].x1, hatFrame[i].x2, hatFrame[i].y1, hatFrame[i].y2);
+      console.log(hatFrame[i]);
       hatFrame[i].src.copyTo(src.rowRange(hatFrame[i].y1, hatFrame[i].y2)
         .colRange(hatFrame[i].x1, hatFrame[i].x2), hatFrame[i].mask);
     }
