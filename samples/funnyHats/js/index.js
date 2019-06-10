@@ -34,7 +34,7 @@ function startVideoProcessing() {
   setTimeout(processVideo, 0);
 }
 
-function calculateHatCoordinates(width, height, i) {
+function resizeHat(width, height, i) {
   console.log(width, height);
   cv.resize(hatSrc, hatDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
   cv.resize(mask, maskDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
@@ -42,10 +42,14 @@ function calculateHatCoordinates(width, height, i) {
     console.log("clone");
     hatFrame[i].src = hatDst.clone();
     hatFrame[i].mask = maskDst.clone();
-  } else if (hatFrame[i].y1 === 0) {
+  } else if (hatFrame[i].y1 === 0 && hatFrame[i].x2 < video.width && hatFrame[i].x1 >= 0) {
     console.log("roi");
     hatFrame[i].src = hatDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
     hatFrame[i].mask = maskDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
+  } else {
+    hatFrame[i].show = false;
+    hatFrame[i].src = new cv.Mat();
+    hatFrame[i].mask = new cv.Mat();
   }
 }
 
@@ -76,7 +80,7 @@ function processVideo() {
       hatFrame.length = faces.size();
       console.log("delete2", hatFrame.length, faces.size());
     }
-    // draw hats
+    // draw hat for each face
     for (let i = 0; i < faces.size(); ++i) {
       console.log("i", i, hatFrame.length, faces.size());
       let face = faces.get(i);
@@ -89,28 +93,30 @@ function processVideo() {
       let x2 = x1 + scaledWidth;
       if (y1 < 0) y1 = 0;
       if (!hatFrame[i]) {
-        hatFrame.push({ x1: x1, x2: x2, y1: y1, y2: y2 });
-        calculateHatCoordinates(scaledWidth, scaledHeight, i);
+        // create new hat frame
+        hatFrame.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2,
+          show: true });
+        resizeHat(scaledWidth, scaledHeight, i);
       } else if (hatFrame[i].x1 > x1 + JITTER_LIMIT ||
-        hatFrame[i].x1 < x1 - JITTER_LIMIT ||
-        hatFrame[i].y1 > y1 + JITTER_LIMIT ||
-        hatFrame[i].y1 < y1 - JITTER_LIMIT ||
-        hatFrame[i].x2 > x2 + JITTER_LIMIT ||
-        hatFrame[i].x2 < x2 - JITTER_LIMIT ||
-        hatFrame[i].y2 > y2 + JITTER_LIMIT ||
-        hatFrame[i].y2 < y2 - JITTER_LIMIT) {
-
+                 hatFrame[i].x1 < x1 - JITTER_LIMIT ||
+                 hatFrame[i].y1 > y1 + JITTER_LIMIT ||
+                 hatFrame[i].y1 < y1 - JITTER_LIMIT ||
+                 hatFrame[i].x2 > x2 + JITTER_LIMIT ||
+                 hatFrame[i].x2 < x2 - JITTER_LIMIT) {
+        // replace old hat frame
         console.log("resize");
         hatFrame[i].src.delete();
         hatFrame[i].mask.delete();
-        hatFrame.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2 });
-        calculateHatCoordinates(scaledWidth, scaledHeight, i);
+        hatFrame.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2,
+          show: true });
+        resizeHat(scaledWidth, scaledHeight, i);
       }
       console.log(hatFrame[i]);
-      hatFrame[i].src.copyTo(src.rowRange(hatFrame[i].y1, hatFrame[i].y2)
-        .colRange(hatFrame[i].x1, hatFrame[i].x2), hatFrame[i].mask);
+      if (hatFrame[i].show) {
+        hatFrame[i].src.copyTo(src.rowRange(hatFrame[i].y1, hatFrame[i].y2)
+          .colRange(hatFrame[i].x1, hatFrame[i].x2), hatFrame[i].mask);
+      }
     }
-    // draw output video
     cv.imshow('canvasOutput', src);
 
     // schedule the next processing
