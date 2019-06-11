@@ -2,10 +2,14 @@ let utils = new Utils('errorMessage');
 
 let stats = null;
 const FPS = 30;
-let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
+//let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
+let resolution = 'qvga';
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
+let canvasWorker = document.getElementById('canvasWorker');
 let canvasContext = canvasOutput.getContext('2d');
+//let offscreen = canvasOutput.transferControlToOffscreen();
+let offscreen;
 
 let streaming = false;
 let src = null;
@@ -53,14 +57,6 @@ function startVideoProcessing() {
   stats.domElement.style.top = '0px';
   // load pre-trained classifier for face detection
   classifier.load(faceDetectionPath);
-  // create worker for gender detection
-  genderWorker = new Worker("js/genderWorker.js");
-  let serializer = new XMLSerializer();
-  let serializedVideo = serializer.serializeToString(video);
-  genderWorker.postMessage(serializedVideo);
-  genderWorker.onmessage = function (e) {
-    gender = e.data[0];
-  }
   // schedule the first processing
   setTimeout(processVideo, 0);
 }
@@ -87,16 +83,6 @@ function processVideo() {
       1.1, 3); // scaleFactor=1.1, minNeighbors=3
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
-      //genderWorker.postMessage(faceFrame, genderNet);
-      //genderWorker.postMessage([faceFrame, genderNet]);
-
-      // detect age
-      /*ageNet.setInput(blob);
-      let agePreds = ageNet.forward();
-      let age = ageList[
-        agePreds.data32F.indexOf(Math.max(...agePreds.data32F))];
-      // add label with gender and age to face
-      let label = gender + " " + age;*/
       let label = gender;
       cv.putText(dst, label, { x: face.x, y: face.y - 10 },
         cv.FONT_HERSHEY_SIMPLEX,
@@ -106,10 +92,6 @@ function processVideo() {
       let point2 = new cv.Point(face.x + face.width, face.y + face.height);
       cv.rectangle(dst, point1, point2, color);
 
-      /*faceFrame.delete();
-      genderPreds.delete();
-      agePreds.delete();
-      blob.delete();*/
     }
     cv.imshow('canvasOutput', dst);
     // schedule the next processing
@@ -135,6 +117,30 @@ function onVideoStarted() {
   streaming = true;
   video.width = video.videoWidth;
   video.height = video.videoHeight;
+
+  // create worker for gender detection
+  genderWorker = new Worker("js/genderWorker.js");
+  // var canvasWorkerContext = canvasWorker.getContext('2d');
+  // canvasWorkerContext.drawImage(canvasOutput, 0, 0);
+  // canvasWorkerContext.commit();
+
+  //offscreen = canvasWorker.transferControlToOffscreen();
+  //genderWorker.postMessage({ canvas: offscreen }, [offscreen]);
+  //let imageData = canvasContext.createImageData(video.width, video.height);
+  //genderWorker.postMessage({ image: imageData });
+
+  genderWorker.onmessage = function (e) {
+    gender = e.data;
+    // var canvasWorkerContext = canvasWorker.getContext('2d');
+    // canvasWorkerContext.drawImage(canvasOutput, 0, 0);
+    // canvasWorkerContext.commit();
+
+    //offscreen = canvasOutput.transferControlToOffscreen();
+    //genderWorker.postMessage({ canvas: offscreen }, [offscreen]);
+    let imageData = canvasContext.createImageData(video.width, video.height);
+    genderWorker.postMessage({ image: imageData });
+  }
+
   startVideoProcessing();
 }
 
@@ -147,29 +153,9 @@ function onVideoStopped() {
 document.getElementById('status').innerHTML = 'Loading OpenCV...';
 utils.loadOpenCv(() => {
   document.getElementById('status').innerHTML =
-    'Loading deploy_gender.prototxt...';
-  utils.createFileFromUrl(genderProtoPath, genderProtoUrl, () => {
-    document.getElementById('status').innerHTML =
-      'Loading gender_net.caffemodel';
-    utils.createFileFromUrl(genderModelPath, genderModelUrl, () => {
-      // read gender network into genderNet
-      genderNet = cv.readNetFromCaffe(genderProtoPath, genderModelPath);
-      document.getElementById('status').innerHTML =
-        'Loading deploy_age.prototxt';
-      utils.createFileFromUrl(ageProtoPath, ageProtoUrl, () => {
-        document.getElementById('status').innerHTML =
-          'Loading age_net.caffemodel';
-        utils.createFileFromUrl(ageModelPath, ageModelUrl, () => {
-          // read age network into ageNet
-          ageNet = cv.readNetFromCaffe(ageProtoPath, ageModelPath);
-          document.getElementById('status').innerHTML =
-            'Loading haarcascade_frontalface_default.xml';
-          utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-            document.getElementById('status').innerHTML = '';
-            startCamera();
-          });
-        });
-      });
-    });
+    'Loading haarcascade_frontalface_default.xml';
+  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+    document.getElementById('status').innerHTML = '';
+    startCamera();
   });
 });
