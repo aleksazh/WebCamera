@@ -1,4 +1,29 @@
-importScripts('../../../build/wasm/opencv.js')
+let Module = {
+  preRun: [],
+  onRuntimeInitialized: function () {
+    createFileFromUrl(genderProtoPath, genderProtoUrl, () => {
+      createFileFromUrl(genderModelPath, genderModelUrl, () => {
+        // read gender network into genderNet
+        genderNet = cv.readNetFromCaffe(genderProtoPath, genderModelPath);
+        createFileFromUrl(ageProtoPath, ageProtoUrl, () => {
+          createFileFromUrl(ageModelPath, ageModelUrl, () => {
+            // read age network into ageNet
+            ageNet = cv.readNetFromCaffe(ageProtoPath, ageModelPath);
+            createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+              frameBGR = new cv.Mat(240, 320, cv.CV_8UC3);
+              faces = new cv.RectVector();
+              classifier = new cv.CascadeClassifier();
+              classifier.load(faceDetectionPath);
+              self.postMessage({ msg: "empty" });
+            });
+          });
+        });
+      });
+    });
+  },
+};
+
+importScripts('../../../build/wasm/opencv.js');
 
 let canvas;
 let image;
@@ -43,14 +68,9 @@ self.onmessage = function (e) {
   //     classifier.delete();
   //     return;
   //   }
-  // get image from canvas
-  //canvas = e.data.canvas;
+  // get image data
   image = e.data.image;
-  //canvasContext = canvas.getContext('2d');
-  //let imgData = canvasContext.getImageData(0, 0,
-  //  canvas.width, canvas.height);
   src = cv.matFromImageData(image);
-  //src = cv.imread(image);
   cv.cvtColor(src, frameBGR, cv.COLOR_RGBA2BGR);
   // detect faces
   classifier.detectMultiScale(frameBGR, faces,
@@ -67,22 +87,21 @@ self.onmessage = function (e) {
     let genderPreds = genderNet.forward();
     gender = genderList[
       genderPreds.data32F.indexOf(Math.max(...genderPreds.data32F))];
-    self.postMessage(gender);
     // detect age
-    /*ageNet.setInput(blob);
+    ageNet.setInput(blob);
     let agePreds = ageNet.forward();
     let age = ageList[
       agePreds.data32F.indexOf(Math.max(...agePreds.data32F))];
-    // add label with gender and age to face
-    let label = gender + " " + age;*/
+    self.postMessage({ msg: "sendData", gender: gender, age: age, rectangle: faceRect });
 
     faceFrame.delete();
     genderPreds.delete();
-    //agePreds.delete();
+    agePreds.delete();
     blob.delete();
   }
+  src.delete();
   if (faces.size() == 0) {
-    self.postMessage("");
+    self.postMessage({ msg: "empty" });
   }
   // } catch (err) {
   // }
@@ -104,20 +123,3 @@ function createFileFromUrl(path, url, callback) {
   request.send();
 };
 
-createFileFromUrl(genderProtoPath, genderProtoUrl, () => {
-  createFileFromUrl(genderModelPath, genderModelUrl, () => {
-    // read gender network into genderNet
-    genderNet = cv.readNetFromCaffe(genderProtoPath, genderModelPath);
-    createFileFromUrl(ageProtoPath, ageProtoUrl, () => {
-      createFileFromUrl(ageModelPath, ageModelUrl, () => {
-        // read age network into ageNet
-        ageNet = cv.readNetFromCaffe(ageProtoPath, ageModelPath);
-        frameBGR = new cv.Mat(240, 320, cv.CV_8UC3);
-        faces = new cv.RectVector();
-        classifier = new cv.CascadeClassifier();
-        classifier.load(faceDetectionPath);
-        self.postMessage("");
-      });
-    });
-  });
-});
