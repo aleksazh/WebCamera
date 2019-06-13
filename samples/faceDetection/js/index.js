@@ -4,7 +4,6 @@ let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 let canvasContext = canvasOutput.getContext('2d');
-let statsCheckbox = document.getElementById('hideStats');
 let streaming = false;
 let src = null;
 let cap = null;
@@ -14,30 +13,14 @@ const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'classifiers/haarcascade_frontalface_default.xml';
 const color = [0, 255, 255, 255];
 
-statsCheckbox.addEventListener("change", function () {
-  statsCheckbox.checked
-  if (document.getElementById('hideStats').checked) {
-    stats.domElement.classList.add("hidden");
-  } else {
-    stats.domElement.classList.remove("hidden");
-  }
-});
-
 const FPS = 30;
 function startVideoProcessing() {
-  stats = new Stats();
+  initStats ();
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   gray = new cv.Mat();
   cap = new cv.VideoCapture(video);
   faces = new cv.RectVector();
   classifier = new cv.CascadeClassifier();
-
-  stats.showPanel(0);
-  document.body.appendChild(stats.domElement);
-  stats.domElement.style.position = 'absolute';
-  stats.domElement.style.right = '0px';
-  stats.domElement.style.top = '0px';
-  stats.domElement.classList.add("hidden");
   // load pre-trained classifier for face detection
   classifier.load(faceDetectionPath);
   // schedule the first processing

@@ -18,6 +18,7 @@ let dstC3Small = null;
 let dstC4Small = null;
 
 function startVideoProcessing() {
+  vc = new cv.VideoCapture(video);
   src = new cv.Mat(height, width, cv.CV_8UC4);
   dstC1 = new cv.Mat(height, width, cv.CV_8UC1);
   dstC3 = new cv.Mat(height, width, cv.CV_8UC3);
@@ -96,16 +97,25 @@ function startCamera() {
   }
 }
 
-function onVideoStarted() {
+function setWidthAndHeight() {
   height = video.videoHeight;
   width = video.videoWidth;
   smallHeight = parseInt(video.videoHeight / 5);
   smallWidth = parseInt(video.videoWidth / 5);
   video.setAttribute('width', width);
   video.setAttribute('height', height);
+  let canvas = document.getElementById("canvasOutput");
+  canvas.style.height = `${height}px`;
+  canvas.style.width = `${width}px`;
+  document.getElementsByClassName("canvas-wrapper")[0].style.height =
+    `${height}px`;
+}
+
+function onVideoStarted() {
   streaming = true;
-  vc = new cv.VideoCapture(video);
-  resizeElements();
+  setWidthAndHeight();
+  resizeMenu();
+  resizeFilterSettings();
   startVideoProcessing();
 }
 

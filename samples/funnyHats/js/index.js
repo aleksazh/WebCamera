@@ -1,6 +1,6 @@
 let utils = new Utils('errorMessage');
-//let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
-let resolution = 'qvga';
+let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
+//let resolution = 'qvga';
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 let canvasContext = canvasOutput.getContext('2d');
@@ -12,15 +12,17 @@ let maskDst = null;
 let faces = null;
 let classifier = null;
 let hatFrame = []; // last drawn hat frame for each face
+let width = 0;
+let height = 0;
 
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
-const JITTER_LIMIT = 5;
+const JITTER_LIMIT = 3;
 
 
 const FPS = 30;
 function startVideoProcessing() {
-  src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+  src = new cv.Mat(height, width, cv.CV_8UC4);
   gray = new cv.Mat();
   cap = new cv.VideoCapture(video);
   hatDst = new cv.Mat();
@@ -37,10 +39,10 @@ function startVideoProcessing() {
 function resizeHat(width, height, i) {
   cv.resize(hatSrc, hatDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
   cv.resize(mask, maskDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
-  if (hatFrame[i].y1 > 0 && hatFrame[i].x2 < video.width && hatFrame[i].x1 >= 0) {
+  if (hatFrame[i].y1 > 0 && hatFrame[i].x2 < width && hatFrame[i].x1 >= 0) {
     hatFrame[i].src = hatDst.clone();
     hatFrame[i].mask = maskDst.clone();
-  } else if (hatFrame[i].y1 === 0 && hatFrame[i].x2 < video.width && hatFrame[i].x1 >= 0) {
+  } else if (hatFrame[i].y1 === 0 && hatFrame[i].x2 < width && hatFrame[i].x1 >= 0) {
     hatFrame[i].src = hatDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
     hatFrame[i].mask = maskDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
   } else {
@@ -96,7 +98,9 @@ function processVideo() {
                  hatFrame[i].y1 > y1 + JITTER_LIMIT ||
                  hatFrame[i].y1 < y1 - JITTER_LIMIT ||
                  hatFrame[i].x2 > x2 + JITTER_LIMIT ||
-                 hatFrame[i].x2 < x2 - JITTER_LIMIT) {
+                 hatFrame[i].x2 < x2 - JITTER_LIMIT ||
+                 hatFrame[i].y2 > y2 + JITTER_LIMIT ||
+                 hatFrame[i].y2 < y2 - JITTER_LIMIT) {
         // replace old hat frame
         hatFrame[i].src.delete();
         hatFrame[i].mask.delete();
@@ -120,6 +124,18 @@ function processVideo() {
   }
 };
 
+function setWidthAndHeight() {
+  height = video.videoHeight;
+  width = video.videoWidth;
+  video.setAttribute('width', width);
+  video.setAttribute('height', height);
+  let canvas = document.getElementById("canvasOutput");
+  canvas.style.height = `${height}px`;
+  canvas.style.width = `${width}px`;
+  document.getElementsByClassName("canvas-wrapper")[0].style.height =
+    `${height}px`;
+}
+
 function startCamera() {
   if (!streaming) {
     utils.clearError();
@@ -132,12 +148,10 @@ function startCamera() {
 
 function onVideoStarted() {
   streaming = true;
-  video.width = video.videoWidth;
-  video.height = video.videoHeight;
+  setWidthAndHeight();
+  resizeMenu();
   //canvasOutput.width = video.videoWidth;
   //canvasOutput.height = video.videoHeight;
-  //canvasOutput.style.width = `${video.videoWidth}px`;
-  //canvasOutput.style.height = `${video.videoHeight}px`;
   startVideoProcessing();
 }
 

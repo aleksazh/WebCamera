@@ -16,7 +16,7 @@
 
   <div class="canvas-wrapper">
     <span id="filterName" class="current-filter-name">No Filter</span>
-    <canvas id="canvasOutput" class="canvas-big centered" onclick="showOrHideSettings()"></canvas>
+    <canvas id="canvasOutput" class="canvas-big centered"></canvas>
     <div class="settings-wrapper">
       <div id="threshold-settings" class="settings hidden"><label for="threshold-value">Threshold value:
           <output id="threshold-value-output"></output>
@@ -153,6 +153,10 @@
       <button data-action="slideRight" class="menu-button">&#8250;</button>
     </div>
   </div>
+  <div class="centered stats-settings">
+    <label id="hideStatsLabel" class="hidden" for="hideStats">Hide statistics</label>
+    <input id="hideStats" class="hidden" type="checkbox" checked>
+  </div>
   <div>
     <video id="videoInput" class="hidden">Your browser does not support the video tag.</video>
   </div>
@@ -162,6 +166,7 @@
   <script src="js/ui.js" type="text/javascript"></script>
   <script src="js/utils.js" type="text/javascript"></script>
   <script src="js/menu.js" type="text/javascript"></script>
+  <script src="js/statsInit.js" type="text/javascript"></script>
   <script src="js/index.js" type="text/javascript"></script>
 </body>
 

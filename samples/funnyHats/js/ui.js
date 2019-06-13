@@ -1,5 +1,4 @@
 let stats = null;
-let statsCheckbox = document.getElementById('hideStats');
 
 let hats = [];
 let hatSrc = null;
@@ -8,23 +7,8 @@ let currentHat = 0;
 let hatsNum = document.getElementsByTagName('img').length;
 
 
-statsCheckbox.addEventListener("change", function () {
-  if (statsCheckbox.checked) {
-    stats.domElement.classList.add("hidden");
-  } else {
-    stats.domElement.classList.remove("hidden");
-  }
-});
-
 function initUI() {
-  stats = new Stats();
-  stats.showPanel(0);
-  document.body.appendChild(stats.domElement);
-  stats.domElement.style.position = 'absolute';
-  stats.domElement.style.right = '0px';
-  stats.domElement.style.top = '0px';
-  stats.domElement.classList.add("hidden");
-
+  initStats ();
   let rgbaVector = new cv.MatVector();
   for (let i = 0; i < hatsNum; i++) {
     // load hat and read attributes
