@@ -11,7 +11,7 @@ let hatDst = null;
 let maskDst = null;
 let faces = null;
 let classifier = null;
-let hatFrame = []; // last drawn hat frame for each face
+let hatFrames = []; // last drawn hat frame for each face
 let width = 0;
 let height = 0;
 
@@ -36,19 +36,19 @@ function startVideoProcessing() {
   setTimeout(processVideo, 0);
 }
 
-function resizeHat(width, height, i) {
-  cv.resize(hatSrc, hatDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
-  cv.resize(mask, maskDst, new cv.Size(width, height), 0, 0, cv.INTER_LINEAR);
-  if (hatFrame[i].y1 > 0 && hatFrame[i].x2 < width && hatFrame[i].x1 >= 0) {
-    hatFrame[i].src = hatDst.clone();
-    hatFrame[i].mask = maskDst.clone();
-  } else if (hatFrame[i].y1 === 0 && hatFrame[i].x2 < width && hatFrame[i].x1 >= 0) {
-    hatFrame[i].src = hatDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
-    hatFrame[i].mask = maskDst.roi(new cv.Rect(0, height - hatFrame[i].y2, width, hatFrame[i].y2));
+function resizeHat(scaledWidth, scaledHeight, i) {
+  cv.resize(hatSrc, hatDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  cv.resize(mask, maskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  if (hatFrames[i].y1 > 0 && hatFrames[i].x2 < width && hatFrames[i].x1 >= 0) {
+    hatFrames[i].src = hatDst.clone();
+    hatFrames[i].mask = maskDst.clone();
+  } else if (hatFrames[i].y1 === 0 && hatFrames[i].x2 < width && hatFrames[i].x1 >= 0) {
+    hatFrames[i].src = hatDst.roi(new cv.Rect(0, scaledHeight - hatFrames[i].y2, scaledWidth, hatFrames[i].y2));
+    hatFrames[i].mask = maskDst.roi(new cv.Rect(0, scaledHeight - hatFrames[i].y2, scaledWidth, hatFrames[i].y2));
   } else {
-    hatFrame[i].show = false;
-    hatFrame[i].src = new cv.Mat();
-    hatFrame[i].mask = new cv.Mat();
+    hatFrames[i].show = false;
+    hatFrames[i].src = new cv.Mat();
+    hatFrames[i].mask = new cv.Mat();
   }
 }
 
@@ -70,12 +70,12 @@ function processVideo() {
     classifier.detectMultiScale(gray, faces,
       1.1, 3); // scaleFactor=1.1, minNeighbors=3
     // delete hats for old faces from hatFrame
-    if (hatFrame.length > faces.size() && faces.size() > 0) {
-      for (let i = faces.size(); i < hatFrame.length; ++i) {
-        hatFrame[i].src.delete();
-        hatFrame[i].mask.delete();
+    if (hatFrames.length > faces.size() && faces.size() > 0) {
+      for (let i = faces.size(); i < hatFrames.length; ++i) {
+        hatFrames[i].src.delete();
+        hatFrames[i].mask.delete();
       }
-      hatFrame.length = faces.size();
+      hatFrames.length = faces.size();
     }
     // draw hat for each face
     for (let i = 0; i < faces.size(); ++i) {
@@ -88,29 +88,29 @@ function processVideo() {
       let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
       let x2 = x1 + scaledWidth;
       if (y1 < 0) y1 = 0;
-      if (!hatFrame[i]) {
+      if (!hatFrames[i]) {
         // create new hat frame
-        hatFrame.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2,
+        hatFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2,
           show: true });
         resizeHat(scaledWidth, scaledHeight, i);
-      } else if (hatFrame[i].x1 > x1 + JITTER_LIMIT ||
-                 hatFrame[i].x1 < x1 - JITTER_LIMIT ||
-                 hatFrame[i].y1 > y1 + JITTER_LIMIT ||
-                 hatFrame[i].y1 < y1 - JITTER_LIMIT ||
-                 hatFrame[i].x2 > x2 + JITTER_LIMIT ||
-                 hatFrame[i].x2 < x2 - JITTER_LIMIT ||
-                 hatFrame[i].y2 > y2 + JITTER_LIMIT ||
-                 hatFrame[i].y2 < y2 - JITTER_LIMIT) {
+      } else if (hatFrames[i].x1 > x1 + JITTER_LIMIT ||
+                 hatFrames[i].x1 < x1 - JITTER_LIMIT ||
+                 hatFrames[i].y1 > y1 + JITTER_LIMIT ||
+                 hatFrames[i].y1 < y1 - JITTER_LIMIT ||
+                 hatFrames[i].x2 > x2 + JITTER_LIMIT ||
+                 hatFrames[i].x2 < x2 - JITTER_LIMIT ||
+                 hatFrames[i].y2 > y2 + JITTER_LIMIT ||
+                 hatFrames[i].y2 < y2 - JITTER_LIMIT) {
         // replace old hat frame
-        hatFrame[i].src.delete();
-        hatFrame[i].mask.delete();
-        hatFrame.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2,
+        hatFrames[i].src.delete();
+        hatFrames[i].mask.delete();
+        hatFrames.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2,
           show: true });
         resizeHat(scaledWidth, scaledHeight, i);
       }
-      if (hatFrame[i].show) {
-        hatFrame[i].src.copyTo(src.rowRange(hatFrame[i].y1, hatFrame[i].y2)
-          .colRange(hatFrame[i].x1, hatFrame[i].x2), hatFrame[i].mask);
+      if (hatFrames[i].show) {
+        hatFrames[i].src.copyTo(src.rowRange(hatFrames[i].y1, hatFrames[i].y2)
+          .colRange(hatFrames[i].x1, hatFrames[i].x2), hatFrames[i].mask);
       }
     }
     cv.imshow('canvasOutput', src);

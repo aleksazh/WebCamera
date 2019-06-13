@@ -12,8 +12,8 @@ function initUI() {
   let rgbaVector = new cv.MatVector();
   for (let i = 0; i < hatsNum; i++) {
     // load hat and read attributes
-    hatSrc = cv.imread(`hat${i}`);
     let img = document.getElementById(`hat${i}`);
+    hatSrc = cv.imread(img);
     let scale = Number(img.dataset.scaleFactor);
     let yOffset = Number(img.dataset.yOffset);
     let name = img.dataset.name;
