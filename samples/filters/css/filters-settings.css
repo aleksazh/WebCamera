@@ -42,30 +42,30 @@
 .single-label {
   vertical-align: text-bottom;
 }
-.settings-wrapper > label {
+.settings-wrapper label {
   display: inline-block;
   text-align: center;
 }
-.settings-wrapper > select {
+.settings-wrapper select {
   display: block;
   margin: 10px 0;
 }
-.settings-wrapper > input[type=checkbox] {
+.settings-wrapper input[type=checkbox] {
   display: block;
   margin: 7px 0;
   position: relative;
   top: 8px;
   left: 30px;
 }
-.settings-wrapper > input[type=range] {
+.settings-wrapper input[type=range] {
   display: block;
   -webkit-appearance: none;
   margin: 20px 0;
 }
-.settings-wrapper > input[type=range]:focus {
+.settings-wrapper input[type=range]:focus {
   outline: none;
 }
-.settings-wrapper > input[type=range]::-webkit-slider-runnable-track {
+.settings-wrapper input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 4px;
   cursor: pointer;
@@ -74,7 +74,7 @@
   border-radius: 1.3px;
   border: 0.2px solid #010101;
 }
-.settings-wrapper > input[type=range]::-webkit-slider-thumb {
+.settings-wrapper input[type=range]::-webkit-slider-thumb {
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   border: 1px solid #000000;
   height: 20px;
@@ -85,6 +85,6 @@
   -webkit-appearance: none;
   margin-top: -8px;
 }
-.settings-wrapper > input[type=range]:focus::-webkit-slider-runnable-track {
+.settings-wrapper input[type=range]:focus::-webkit-slider-runnable-track {
   background: white;
 }
