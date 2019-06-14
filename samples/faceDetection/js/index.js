@@ -8,21 +8,27 @@ let streaming = false;
 let src = null;
 let cap = null;
 let faces = null;
-let classifier = null;
+let eyes = null;
+let faceCascade = null;
+let eyeCascade = null;
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'classifiers/haarcascade_frontalface_default.xml';
+const eyeDetectionPath = 'haarcascade_eye.xml';
+const eyeDetectionUrl = 'classifiers/haarcascade_eye.xml';
 const color = [0, 255, 255, 255];
 
 const FPS = 30;
 function startVideoProcessing() {
-  initStats ();
+  initStats();
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   gray = new cv.Mat();
   cap = new cv.VideoCapture(video);
   faces = new cv.RectVector();
-  classifier = new cv.CascadeClassifier();
-  // load pre-trained classifier for face detection
-  classifier.load(faceDetectionPath);
+  eyes = new cv.RectVector();
+  faceCascade = new cv.CascadeClassifier();
+  eyeCascade = new cv.CascadeClassifier();
+  faceCascade.load(faceDetectionPath);
+  eyeCascade.load(eyeDetectionPath);
   // schedule the first processing
   setTimeout(processVideo, 0);
 }
@@ -34,7 +40,7 @@ function processVideo() {
       src.delete();
       gray.delete();
       faces.delete();
-      classifier.delete();
+      faceCascade.delete();
       return;
     }
     stats.begin();
@@ -43,7 +49,7 @@ function processVideo() {
     cap.read(src);
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     // detect faces
-    classifier.detectMultiScale(gray, faces,
+    faceCascade.detectMultiScale(gray, faces,
       1.1, 3); // scaleFactor=1.1, minNeighbors=3
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
@@ -51,6 +57,17 @@ function processVideo() {
       let point1 = new cv.Point(face.x, face.y);
       let point2 = new cv.Point(face.x + face.width, face.y + face.height);
       cv.rectangle(src, point1, point2, color);
+      // detect eyes in face ROI
+      let faceGray = gray.roi(faces.get(i));
+      let faceSrc = src.roi(faces.get(i));
+      eyeCascade.detectMultiScale(faceGray, eyes);
+      for (let j = 0; j < eyes.size(); ++j) {
+        let point1 = new cv.Point(eyes.get(j).x, eyes.get(j).y);
+        let point2 = new cv.Point(eyes.get(j).x + eyes.get(j).width,
+          eyes.get(j).y + eyes.get(j).height);
+        cv.rectangle(faceSrc, point1, point2, [0, 0, 255, 255]);
+      }
+      faceGray.delete(); faceSrc.delete();
     }
     cv.imshow('canvasOutput', src);
     // schedule the next processing
@@ -90,6 +107,8 @@ function onVideoStopped() {
 
 utils.loadOpenCv(() => {
   utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    startCamera();
+    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+      startCamera();
+    });
   });
 });
