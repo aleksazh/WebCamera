@@ -15,7 +15,8 @@ const faceDetectionPath = 'haarcascade_frontalface_default.xml';
 const faceDetectionUrl = 'classifiers/haarcascade_frontalface_default.xml';
 const eyeDetectionPath = 'haarcascade_eye.xml';
 const eyeDetectionUrl = 'classifiers/haarcascade_eye.xml';
-const color = [0, 255, 255, 255];
+const faceColor = [0, 255, 255, 255];
+const eyesColor = [0, 0, 255, 255];
 
 const FPS = 30;
 function startVideoProcessing() {
@@ -26,8 +27,8 @@ function startVideoProcessing() {
   faces = new cv.RectVector();
   eyes = new cv.RectVector();
   faceCascade = new cv.CascadeClassifier();
-  eyeCascade = new cv.CascadeClassifier();
   faceCascade.load(faceDetectionPath);
+  eyeCascade = new cv.CascadeClassifier();
   eyeCascade.load(eyeDetectionPath);
   // schedule the first processing
   setTimeout(processVideo, 0);
@@ -37,10 +38,9 @@ function processVideo() {
   try {
     if (!streaming) {
       // clean and stop
-      src.delete();
-      gray.delete();
-      faces.delete();
-      faceCascade.delete();
+      src.delete(); gray.delete();
+      faces.delete(); faceCascade.delete();
+      eyes.delete(); eyeCascade.delete();
       return;
     }
     stats.begin();
@@ -56,7 +56,7 @@ function processVideo() {
       // draw face
       let point1 = new cv.Point(face.x, face.y);
       let point2 = new cv.Point(face.x + face.width, face.y + face.height);
-      cv.rectangle(src, point1, point2, color);
+      cv.rectangle(src, point1, point2, faceColor);
       // detect eyes in face ROI
       let faceGray = gray.roi(faces.get(i));
       let faceSrc = src.roi(faces.get(i));
@@ -65,7 +65,7 @@ function processVideo() {
         let point1 = new cv.Point(eyes.get(j).x, eyes.get(j).y);
         let point2 = new cv.Point(eyes.get(j).x + eyes.get(j).width,
           eyes.get(j).y + eyes.get(j).height);
-        cv.rectangle(faceSrc, point1, point2, [0, 0, 255, 255]);
+        cv.rectangle(faceSrc, point1, point2, eyesColor);
       }
       faceGray.delete(); faceSrc.delete();
     }

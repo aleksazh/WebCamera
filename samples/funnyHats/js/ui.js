@@ -2,14 +2,21 @@ let stats = null;
 
 let hats = [];
 let hatSrc = null;
-let mask = null;
+let hatMask = null;
 let currentHat = 0;
-let hatsNum = document.getElementsByTagName('img').length;
+let hatsNum = document.getElementsByClassName('hat-image').length;
+
+let glasses = [];
+let glassesSrc = null;
+let glassesMask = null;
+let currentGlasses = 0;
+let glassesNum = document.getElementsByClassName('glasses-image').length;
 
 
 function initUI() {
-  initStats ();
+  initStats();
   let rgbaVector = new cv.MatVector();
+  // hats initialization
   for (let i = 0; i < hatsNum; i++) {
     // load hat and read attributes
     let img = document.getElementById(`hat${i}`);
@@ -17,7 +24,14 @@ function initUI() {
     let scale = Number(img.dataset.scaleFactor);
     let yOffset = Number(img.dataset.yOffset);
     let name = img.dataset.name;
-    let hatNode = createHatNode(name, i);
+    let hatNode = createNode(name, 'hatsCarousel');
+    // add event listener to menu canvas
+    hatNode.addEventListener('click', function () {
+      hatSrc.delete(); hatMask.delete();
+      currentHat = i;
+      hatSrc = hats[currentHat].src.clone();
+      hatMask = hats[currentHat].mask.clone();
+    });
     // create mask from alpha channel
     cv.split(hatSrc, rgbaVector);
     // push hat to array of hats
@@ -27,10 +41,37 @@ function initUI() {
     });
     cv.imshow(hatNode, hatSrc);
   }
+  // glassess initialization
+  for (let i = 0; i < glassesNum; i++) {
+    // load glasses and read attributes
+    let img = document.getElementById(`glasses${i}`);
+    glassesSrc = cv.imread(img);
+    let scale = Number(img.dataset.scaleFactor);
+    let yOffset = Number(img.dataset.yOffset);
+    let name = img.dataset.name;
+    let glassesNode = createNode(name, 'glassesCarousel');
+    // add event listener to menu canvas
+    glassesNode.addEventListener('click', function () {
+      glassesSrc.delete(); glassesMask.delete();
+      currentGlasses = i;
+      glassesSrc = glasses[currentGlasses].src.clone();
+      glassesMask = glasses[currentGlasses].mask.clone();
+    });
+    // create mask from alpha channel
+    cv.split(glassesSrc, rgbaVector);
+    // push glasses to array of glasses
+    glasses.push({
+      name: name, src: glassesSrc.clone(),
+      mask: rgbaVector.get(3).clone(), scale: scale, yOffset: yOffset
+    });
+    cv.imshow(glassesNode, glassesSrc);
+  }
   rgbaVector.delete();
-  // choose initial hat
+  // choose initial hat and glasses
   hatSrc = hats[currentHat].src.clone();
-  mask = hats[currentHat].mask.clone();
+  hatMask = hats[currentHat].mask.clone();
+  glassesSrc = glasses[currentGlasses].src.clone();
+  glassesMask = glasses[currentGlasses].mask.clone();
   // now we have canvases and can create menu
   let menuScript = document.createElement('script');
   menuScript.type = 'text/javascript';
@@ -38,25 +79,18 @@ function initUI() {
   document.body.appendChild(menuScript);
 }
 
-function createHatNode(name, i) {
-  let liNode = document.createElement("li");
-  liNode.classList.add("card");
+function createNode(name, carouselName) {
+  let liNode = document.createElement('li');
+  liNode.classList.add('card');
   liNode.setAttribute('data-target', 'card');
-  let divNode = document.createElement("div");
-  let canvasNode = document.createElement("canvas");
-  canvasNode.classList.add("small-canvas");
+  let divNode = document.createElement('div');
+  let canvasNode = document.createElement('canvas');
+  canvasNode.classList.add('small-canvas');
   divNode.appendChild(canvasNode);
   liNode.appendChild(divNode);
   let liText = document.createTextNode(name);
   liNode.appendChild(liText);
-  document.getElementsByClassName('carousel')[0].appendChild(liNode);
-  // add event listener to menu canvas
-  canvasNode.addEventListener("click", function () {
-    hatSrc.delete(); mask.delete();
-    currentHat = i;
-    hatSrc = hats[currentHat].src.clone();
-    mask = hats[currentHat].mask.clone();
-  });
+  document.getElementById(carouselName).appendChild(liNode);
   return canvasNode;
 }
 
@@ -64,5 +98,12 @@ function deleteHats() {
   for (let i = 0; i < hats.length; i++) {
     hats[i].src.delete();
     hats[i].mask.delete();
+  }
+}
+
+function deleteGlasses() {
+  for (let i = 0; i < glasses.length; i++) {
+    glasses[i].src.delete();
+    glasses[i].mask.delete();
   }
 }

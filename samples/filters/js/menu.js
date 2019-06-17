@@ -1,70 +1,79 @@
-const carousel = document.querySelector("[data-target='carousel']");
-const card = carousel.querySelector("[data-target='card']");
-const leftButton = document.querySelector("[data-action='slideLeft']");
-const rightButton = document.querySelector("[data-action='slideRight']");
-const cardCount = carousel.querySelectorAll("[data-target='card']").length;
+const carousels = document.querySelectorAll("[data-target='carousel']");
+const leftButtons = document.querySelectorAll("[data-action='slideLeft']");
+const rightButtons = document.querySelectorAll("[data-action='slideRight']");
 let offset = 0; // offset will always be negative or zero
 
-leftButton.addEventListener("click", function () {
-  const carouselWidth = carousel.offsetWidth;
-  if (offset < 0) {
-    let remainedWidth = 0 - offset;
-    if (remainedWidth <= carouselWidth) {
-      offset += remainedWidth;
-    } else {
-      offset += carouselWidth - carouselWidth / 4;
+// for showing 1/4 part of previous menu window after scrolling
+const menuParts = 4;
+
+leftButtons.forEach(function (button, i) {
+  button.addEventListener("click", function () {
+    const carouselWidth = carousels[i].offsetWidth;
+    if (offset < 0) {
+      let remainedWidth = 0 - offset;
+      if (remainedWidth <= carouselWidth) {
+        offset += remainedWidth;
+      } else {
+        offset += carouselWidth - carouselWidth / menuParts;
+      }
+      carousels[i].style.transform = `translateX(${offset}px)`;
     }
-    carousel.style.transform = `translateX(${offset}px)`;
-  }
-})
-rightButton.addEventListener("click", function () {
-  const maxX = cardCount * card.offsetWidth;
-  const carouselWidth = carousel.offsetWidth;
-  if (offset > -maxX) {
-    let remainedWidth = maxX + offset - carouselWidth;
-    if (remainedWidth <= carouselWidth) {
-      offset -= remainedWidth;
-    } else {
-      offset -= carouselWidth - carouselWidth / 4;
+  });
+});
+
+rightButtons.forEach(function (button, i) {
+  button.addEventListener("click", function () {
+    const cardCount = carousels[i].querySelectorAll("[data-target='card']").length;
+    const card = carousels[i].querySelector("[data-target='card']");
+    const maxX = cardCount * card.offsetWidth;
+    const carouselWidth = carousels[i].offsetWidth;
+    if (offset > -maxX) {
+      let remainedWidth = maxX + offset - carouselWidth;
+      if (remainedWidth <= carouselWidth) {
+        offset -= remainedWidth;
+      } else {
+        offset -= carouselWidth - carouselWidth / menuParts;
+      }
+      carousels[i].style.transform = `translateX(${offset}px)`;
     }
-    carousel.style.transform = `translateX(${offset}px)`;
-  }
-})
+  });
+});
 
 // resize carousel on window resizing
 window.onresize = function () {
   const VGA_WIDTH = 640;
   const GVGA_WIDTH = 320;
-  let buttonWidth =
-    document.querySelector("[data-action='slideRight']").offsetWidth;
+  let buttonWidth = leftButtons[0].offsetWidth;
   let windowConstraintVGA = VGA_WIDTH + 2 * buttonWidth;
   let windowConstraintGVGA = GVGA_WIDTH + 2 * buttonWidth;
-  if (window.innerWidth < windowConstraintVGA && width == VGA_WIDTH) { // vga
-    document.getElementsByClassName("carousel")[0].style.width =
-      `${window.innerWidth - 3 * buttonWidth}px`;
-  } else if (window.innerWidth > windowConstraintVGA &&
-             width == VGA_WIDTH) { // vga
-    document.getElementsByClassName("carousel")[0].style.width =
-      `${width - 2 * buttonWidth}px`;
-  } else if (window.innerWidth < windowConstraintGVGA &&
-             width == GVGA_WIDTH) {// gvga
-    document.getElementsByClassName("carousel")[0].style.width =
-      `${window.innerWidth - 3 * buttonWidth}px`;
-  } else if (window.innerWidth > windowConstraintGVGA &&
-             width == GVGA_WIDTH) {// gvga
-    document.getElementsByClassName("carousel")[0].style.width =
-      `${width - 2 * buttonWidth}px`;
-  }
+  carousels.forEach(function (carousel) {
+    if (window.innerWidth < windowConstraintVGA && width == VGA_WIDTH) { // vga
+      carousel.style.width =
+        `${window.innerWidth - 3 * buttonWidth}px`;
+    } else if (window.innerWidth > windowConstraintVGA &&
+      width == VGA_WIDTH) { // vga
+      carousel.style.width =
+        `${width - 2 * buttonWidth}px`;
+    } else if (window.innerWidth < windowConstraintGVGA &&
+      width == GVGA_WIDTH) {// gvga
+      carousel.style.width =
+        `${window.innerWidth - 3 * buttonWidth}px`;
+    } else if (window.innerWidth > windowConstraintGVGA &&
+      width == GVGA_WIDTH) {// gvga
+      carousel.style.width =
+        `${width - 2 * buttonWidth}px`;
+    }
+  });
 };
 
 // resize menu for current canvas size
 function resizeMenu() {
   const VGA_WIDTH = 640;
   // carousel
-  let buttonWidth =
-    document.querySelector("[data-action='slideRight']").offsetWidth;
-  document.getElementsByClassName("carousel")[0].style.width =
-    `${width - 2 * buttonWidth}px`;
+  let buttonWidth = leftButtons[0].offsetWidth;
+  carousels.forEach(function (carousel) {
+    carousel.style.width = `${width - 2 * buttonWidth}px`;
+  });
   // small canvases and cards
   let smallCanvases = document.getElementsByClassName("small-canvas");
   let scProperties = document.querySelector(".small-canvas");
@@ -79,7 +88,10 @@ function resizeMenu() {
     }
   }
   // buttons
-  let buttons = document.getElementsByClassName("menu-button");
-  buttons[0].style.height = `${scProperties.scrollHeight}px`;
-  buttons[1].style.height = `${scProperties.scrollHeight}px`;
+  rightButtons.forEach(function (button) {
+    button.style.height = `${scProperties.scrollHeight}px`;
+  });
+  leftButtons.forEach(function (button) {
+    button.style.height = `${scProperties.scrollHeight}px`;
+  });
 }
