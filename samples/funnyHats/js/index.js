@@ -68,6 +68,19 @@ function resizeGlasses(scaledWidth, scaledHeight, i) {
   glassesFrames[i].mask = glassesMaskDst.clone();
 }
 
+function exceedJitterLimit(i, x1, x2, y1, y2) {
+  if (hatFrames[i].x1 > x1 + JITTER_LIMIT ||
+    hatFrames[i].x1 < x1 - JITTER_LIMIT ||
+    hatFrames[i].y1 > y1 + JITTER_LIMIT ||
+    hatFrames[i].y1 < y1 - JITTER_LIMIT ||
+    hatFrames[i].x2 > x2 + JITTER_LIMIT ||
+    hatFrames[i].x2 < x2 - JITTER_LIMIT ||
+    hatFrames[i].y2 > y2 + JITTER_LIMIT ||
+    hatFrames[i].y2 < y2 - JITTER_LIMIT)
+    return true;
+  else return false
+}
+
 function processVideo() {
   try {
     if (!streaming) {
@@ -119,14 +132,7 @@ function processVideo() {
           show: true
         });
         resizeHat(scaledHatWidth, scaledHatHeight, i);
-      } else if (hatFrames[i].x1 > x1 + JITTER_LIMIT ||
-        hatFrames[i].x1 < x1 - JITTER_LIMIT ||
-        hatFrames[i].y1 > y1 + JITTER_LIMIT ||
-        hatFrames[i].y1 < y1 - JITTER_LIMIT ||
-        hatFrames[i].x2 > x2 + JITTER_LIMIT ||
-        hatFrames[i].x2 < x2 - JITTER_LIMIT ||
-        hatFrames[i].y2 > y2 + JITTER_LIMIT ||
-        hatFrames[i].y2 < y2 - JITTER_LIMIT) {
+      } else if (exceedJitterLimit(i, x1, x2, y1, y2)) {
         // replace old hat frame
         hatFrames[i].src.delete();
         hatFrames[i].mask.delete();
