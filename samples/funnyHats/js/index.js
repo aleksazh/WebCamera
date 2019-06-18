@@ -45,6 +45,22 @@ function startVideoProcessing() {
   setTimeout(processVideo, 0);
 }
 
+function deleteHatsForOldFaces() {
+  if (hatFrames.length > faces.size() && faces.size() > 0) {
+    for (let i = faces.size(); i < hatFrames.length; ++i) {
+      if (hatFrames[i].src != null && !hatFrames[i].src.isDeleted())
+        hatFrames[i].src.delete();
+      if (hatFrames[i].mask != null && !hatFrames[i].mask.isDeleted())
+        hatFrames[i].mask.delete();
+      if (glassesFrames[i].src != null && !glassesFrames[i].src.isDeleted())
+        glassesFrames[i].src.delete();
+      if (glassesFrames[i].mask != null && !glassesFrames[i].mask.isDeleted())
+        glassesFrames[i].mask.delete();
+    }
+    hatFrames.length = faces.size();
+  }
+}
+
 function resizeHat(scaledWidth, scaledHeight, i) {
   cv.resize(hatSrc, hatDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
   cv.resize(hatMask, hatMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
@@ -59,22 +75,9 @@ function resizeHat(scaledWidth, scaledHeight, i) {
   } else {
     // notify not to draw hat
     hatFrames[i].show = false;
-    hatFrames[i].src = new cv.Mat();
-    hatFrames[i].mask = new cv.Mat();
+    hatFrames[i].src = null;
+    hatFrames[i].mask = null;
   }
-}
-
-function exceedJitterLimit(i, coords) {
-  if (hatFrames[i].x1 > coords.x1 + JITTER_LIMIT ||
-    hatFrames[i].x1 < coords.x1 - JITTER_LIMIT ||
-    hatFrames[i].y1 > coords.y1 + JITTER_LIMIT ||
-    hatFrames[i].y1 < coords.y1 - JITTER_LIMIT ||
-    hatFrames[i].x2 > coords.x2 + JITTER_LIMIT ||
-    hatFrames[i].x2 < coords.x2 - JITTER_LIMIT ||
-    hatFrames[i].y2 > coords.y2 + JITTER_LIMIT ||
-    hatFrames[i].y2 < coords.y2 - JITTER_LIMIT)
-    return true;
-  else return false;
 }
 
 function getHatCoords(face) {
@@ -92,30 +95,48 @@ function getHatCoords(face) {
   };
 }
 
-function detectEyes(face) {
+function exceedJitterLimit(i, coords) {
+  if (hatFrames[i].x1 > coords.x1 + JITTER_LIMIT ||
+    hatFrames[i].x1 < coords.x1 - JITTER_LIMIT ||
+    hatFrames[i].y1 > coords.y1 + JITTER_LIMIT ||
+    hatFrames[i].y1 < coords.y1 - JITTER_LIMIT ||
+    hatFrames[i].x2 > coords.x2 + JITTER_LIMIT ||
+    hatFrames[i].x2 < coords.x2 - JITTER_LIMIT ||
+    hatFrames[i].y2 > coords.y2 + JITTER_LIMIT ||
+    hatFrames[i].y2 < coords.y2 - JITTER_LIMIT)
+    return true;
+  else return false;
+}
+
+function resizeGlasses(i, face, option) {
   let faceGray = gray.roi(face);
   let faceSrc = src.roi(face);
   eyeCascade.detectMultiScale(faceGray, eyes);
   faceGray.delete(); faceSrc.delete();
-}
-
-function getGlassesCoords(i, flag) {
   if (eyes.size() < 2) {
-    glassesFrames.splice(i, 0, { show: true });
-    glassesFrames[i].src = new cv.Mat();
-    glassesFrames[i].mask = new cv.Mat();
-  }
-  else {
-    let eyesWidth = eyes.get(1).x + eyes.get(1).width - eyes.get(0).x;
+    if (option == "new")
+      glassesFrames.splice(i, 0, { show: false });
+    else // replace if not new
+      glassesFrames.splice(i, 1, { show: false });
+    glassesFrames[i].src = null;
+    glassesFrames[i].mask = null;
+  } else {
+    let leftEye = 0;
+    let rightEye = 1;
+    if (eyes.get(0).x > eyes.get(1).x) {
+      leftEye = 1; rightEye = 0;
+    }
+    // get coordinates for glasses
+    let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
     let scaledWidth = parseInt(glasses[currentGlasses].scale * eyesWidth);
     let scaledHeight = parseInt(scaledWidth *
       (glasses[currentGlasses].src.rows / glasses[currentGlasses].src.cols));
     let yOffset = Number(glasses[currentGlasses].yOffset);
-    let y1 = eyes.get(0).y - Math.round(yOffset * eyes.get(0).height);
+    let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
     let y2 = y1 + scaledHeight;
-    let x1 = eyes.get(0).x;
+    let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
     let x2 = x1 + scaledWidth;
-    if (flag == "new")
+    if (option == "new")
       glassesFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2, show: true });
     else
       glassesFrames.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2, show: true });
@@ -124,6 +145,14 @@ function getGlassesCoords(i, flag) {
     glassesFrames[i].src = glassesDst.clone();
     glassesFrames[i].mask = glassesMaskDst.clone();
   }
+}
+
+function replaceOldHatFrame(i, coords) {
+  if (hatFrames[i].src != null && !hatFrames[i].src.isDeleted())
+    hatFrames[i].src.delete();
+  if (hatFrames[i].mask != null && !hatFrames[i].mask.isDeleted())
+    hatFrames[i].mask.delete();
+  hatFrames.splice(i, 1, coords);
 }
 
 function processVideo() {
@@ -146,18 +175,7 @@ function processVideo() {
     let scaleFactor = 1.1;
     let minNeighbors = 3;
     faceCascade.detectMultiScale(gray, faces, scaleFactor, minNeighbors);
-    // delete hats for old faces from hatFrame
-    if (hatFrames.length > faces.size() && faces.size() > 0) {
-      for (let i = faces.size(); i < hatFrames.length; ++i) {
-        hatFrames[i].src.delete();
-        hatFrames[i].mask.delete();
-        if (glassesFrames[i].src != null && !glassesFrames[i].src.isDeleted())
-          glassesFrames[i].src.delete();
-        if (glassesFrames[i].mask != null && !glassesFrames[i].mask.isDeleted())
-          glassesFrames[i].mask.delete();
-      }
-      hatFrames.length = faces.size();
-    }
+    deleteHatsForOldFaces();
     // draw hat for each face
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
@@ -167,16 +185,12 @@ function processVideo() {
         // create new hat frame and glasses frame
         hatFrames.splice(i, 0, hat.coords);
         resizeHat(hat.width, hat.height, i);
-        detectEyes(face);
-        getGlassesCoords(i, "new");
-      } else if (exceedJitterLimit(i, glassesCoords)) {
-        // replace old hat frame
-        hatFrames[i].src.delete();
-        hatFrames[i].mask.delete();
-        hatFrames.splice(i, 1, hat.coords);
+        resizeGlasses(i, face, "new");
+      } else if (exceedJitterLimit(i, hat.coords) || objectChanged) {
+        objectChanged = false;
+        replaceOldHatFrame(i, hat.coords);
         resizeHat(hat.width, hat.height, i);
-        detectEyes(face);
-        getGlassesCoords(i, "replace");
+        resizeGlasses(i, face, "replace");
       }
       if (hatFrames[i].show) {
         hatFrames[i].src.copyTo(src.rowRange(hatFrames[i].y1, hatFrames[i].y2)
@@ -184,6 +198,7 @@ function processVideo() {
         if (glassesFrames[i].show) {
           glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
             .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
+          console.log(glassesFrames[i].x1, glassesFrames[i].x2, glassesFrames[i].y1, glassesFrames[i].y2);
         }
       }
     }

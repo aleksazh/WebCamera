@@ -1,7 +1,12 @@
 const carousels = document.querySelectorAll("[data-target='carousel']");
 const leftButtons = document.querySelectorAll("[data-action='slideLeft']");
 const rightButtons = document.querySelectorAll("[data-action='slideRight']");
-let offset = 0; // offset will always be negative or zero
+
+let offset = [];
+carousels.forEach(function (carousel) {
+  // offset for each caousel will always be negative or zero
+  offset.push(0);
+});
 
 // for showing 1/4 part of previous menu window after scrolling
 const menuParts = 4;
@@ -9,14 +14,14 @@ const menuParts = 4;
 leftButtons.forEach(function (button, i) {
   button.addEventListener("click", function () {
     const carouselWidth = carousels[i].offsetWidth;
-    if (offset < 0) {
-      let remainedWidth = 0 - offset;
+    if (offset[i] < 0) {
+      let remainedWidth = 0 - offset[i];
       if (remainedWidth <= carouselWidth) {
-        offset += remainedWidth;
+        offset[i] += remainedWidth;
       } else {
-        offset += carouselWidth - carouselWidth / menuParts;
+        offset[i] += carouselWidth - carouselWidth / menuParts;
       }
-      carousels[i].style.transform = `translateX(${offset}px)`;
+      carousels[i].style.transform = `translateX(${offset[i]}px)`;
     }
   });
 });
@@ -27,14 +32,14 @@ rightButtons.forEach(function (button, i) {
     const card = carousels[i].querySelector("[data-target='card']");
     const maxX = cardCount * card.offsetWidth;
     const carouselWidth = carousels[i].offsetWidth;
-    if (offset > -maxX) {
-      let remainedWidth = maxX + offset - carouselWidth;
+    if (offset[i] > -maxX) {
+      let remainedWidth = maxX + offset[i] - carouselWidth;
       if (remainedWidth <= carouselWidth) {
-        offset -= remainedWidth;
+        offset[i] -= remainedWidth;
       } else {
-        offset -= carouselWidth - carouselWidth / menuParts;
+        offset[i] -= carouselWidth - carouselWidth / menuParts;
       }
-      carousels[i].style.transform = `translateX(${offset}px)`;
+      carousels[i].style.transform = `translateX(${offset[i]}px)`;
     }
   });
 });
