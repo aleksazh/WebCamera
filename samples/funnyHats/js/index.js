@@ -64,40 +64,40 @@ function replaceOldHatFrame(i, coords) {
   hatFrames.splice(i, 1, coords);
 }
 
-function resizeHat(scaledWidth, scaledHeight, i) {
-  cv.resize(hatSrc, hatDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  cv.resize(hatMask, hatMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  if (hatFrames[i].y1 > 0 && hatFrames[i].x2 < width && hatFrames[i].x1 >= 0) {
-    // copy full image of hat
-    hatFrames[i].src = hatDst.clone();
-    hatFrames[i].mask = hatMaskDst.clone();
-  } else if (hatFrames[i].y1 === 0 && hatFrames[i].x2 < width && hatFrames[i].x1 >= 0) {
-    // copy the part of the hat that is below y=0
-    hatFrames[i].src = hatDst.roi(new cv.Rect(0, scaledHeight - hatFrames[i].y2, scaledWidth, hatFrames[i].y2));
-    hatFrames[i].mask = hatMaskDst.roi(new cv.Rect(0, scaledHeight - hatFrames[i].y2, scaledWidth, hatFrames[i].y2));
-  } else {
-    // notify not to draw hat
-    hatFrames[i].show = false;
-    hatFrames[i].src = new cv.Mat();
-    hatFrames[i].mask = new cv.Mat();
-  }
-}
-
 function getHatCoords(face) {
-  let scaledWidth = parseInt(hats[currentHat].scale * face.width);
+  let scaledWidth = parseInt(hatsData[currentHat].scale * face.width);
   let scaledHeight = parseInt(scaledWidth *
-    (hats[currentHat].src.rows / hats[currentHat].src.cols));
-  let yOffset = Number(hats[currentHat].yOffset);
+    (hatsData[currentHat].src.rows / hatsData[currentHat].src.cols));
+  let yOffset = Number(hatsData[currentHat].yOffset);
   let y2 = face.y + Math.round(yOffset * face.height);
   let y1 = y2 - scaledHeight;
   let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
   let x2 = x1 + scaledWidth;
   if (y1 < 0) y1 = 0;
-  console.log("coords", { x1: x1, x2: x2, y1: y1, y2: y2 });
   return {
     width: scaledWidth, height: scaledHeight,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
   };
+}
+
+function resizeHat(scaledWidth, scaledHeight, i) {
+  cv.resize(hatSrc, hatDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  cv.resize(hatMask, hatMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  let hat = hatFrames[i];
+  if (hat.y1 > 0 && hat.y2 < height && hat.x2 < width && hat.x1 >= 0) {
+    // copy full image of hat
+    hat.src = hatDst.clone();
+    hat.mask = hatMaskDst.clone();
+  } else if (hat.y1 == 0 && hat.y2 < height && hat.x2 < width && hat.x1 >= 0) {
+    // copy the part of the hat that is below y=0
+    hat.src = hatDst.roi(new cv.Rect(0, scaledHeight - hat.y2, scaledWidth, hat.y2));
+    hat.mask = hatMaskDst.roi(new cv.Rect(0, scaledHeight - hat.y2, scaledWidth, hat.y2));
+  } else {
+    // notify not to draw hat
+    hat.show = false;
+    hat.src = new cv.Mat();
+    hat.mask = new cv.Mat();
+  }
 }
 
 function exceedJitterLimit(i, coords) {
@@ -113,11 +113,38 @@ function exceedJitterLimit(i, coords) {
   else return false;
 }
 
-function resizeGlasses(i, face, option) {
-  let show = true;
+function detectEyes(face) {
   let faceGray = gray.roi(face);
   eyeCascade.detectMultiScale(faceGray, eyes);
   faceGray.delete();
+}
+
+function resizeGlasses(scaledWidth, scaledHeight, i) {
+  cv.resize(glassesSrc, glassesDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  cv.resize(glassesMask, glassesMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+  glassesFrames[i].src = glassesDst.clone();
+  glassesFrames[i].mask = glassesMaskDst.clone();
+}
+
+function getGlassesCoords(leftEye, rightEye,face) {
+  let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
+  let scaledWidth = parseInt(glassesData[currentGlasses].scale * eyesWidth);
+  let scaledHeight = parseInt(scaledWidth *
+    (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
+  let yOffset = Number(glassesData[currentGlasses].yOffset);
+  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
+  let y2 = y1 + scaledHeight;
+  let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
+  let x2 = x1 + scaledWidth;
+  return {
+    width: scaledWidth, height: scaledHeight,
+    coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
+  };
+}
+
+function processGlasses(i, face, option) {
+  detectEyes(face);
+  let show = true;
   if (eyes.size() < 2)
     show = false;
   else {
@@ -125,34 +152,22 @@ function resizeGlasses(i, face, option) {
     let rightEye = 1;
     if (eyes.get(0).x > eyes.get(1).x)
       leftEye = 1; rightEye = 0;
-    // get coordinates for glasses
-    let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
-    let scaledWidth = parseInt(glasses[currentGlasses].scale * eyesWidth);
-    let scaledHeight = parseInt(scaledWidth *
-      (glasses[currentGlasses].src.rows / glasses[currentGlasses].src.cols));
-    let yOffset = Number(glasses[currentGlasses].yOffset);
-    let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
-    let y2 = y1 + scaledHeight;
-    let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
-    let x2 = x1 + scaledWidth;
-    console.log("coords", { x1: x1, x2: x2, y1: y1, y2: y2 });
-    if (y1 > 0 && x2 < width && x1 >= 0) {
+    let glasses = getGlassesCoords(leftEye, rightEye, face);
+    // check that glasses coords are in the canvas window
+    if (glasses.coords.y1 > 0 && glasses.coords.y2 < height &&
+      glasses.coords.x2 < width && glasses.coords.x1 >= 0) {
       if (option == "new")
-        glassesFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2, show: show });
+        glassesFrames.splice(i, 0, glasses.coords);
       else { // replace if not new
         glassesFrames[i].src.delete();
         glassesFrames[i].mask.delete();
-        glassesFrames.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2, show: show });
+        glassesFrames.splice(i, 1, glasses.coords);
       }
-      cv.resize(glassesSrc, glassesDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-      cv.resize(glassesMask, glassesMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-      glassesFrames[i].src = glassesDst.clone();
-      glassesFrames[i].mask = glassesMaskDst.clone();
+      resizeGlasses(glasses.width, glasses.height, i);
     } else
       show = false;
   }
   if (!show) {
-    console.log("don't show");
     if (option == "new")
       glassesFrames.splice(i, 0, { show: show });
     else { // replace if not new
@@ -194,15 +209,15 @@ function processVideo() {
         // create new hat frame and glasses frame
         hatFrames.splice(i, 0, hat.coords);
         resizeHat(hat.width, hat.height, i);
-        resizeGlasses(i, face, "new");
+        processGlasses(i, face, "new");
       } else if (exceedJitterLimit(i, hat.coords) || objectChanged) {
         objectChanged = false;
         replaceOldHatFrame(i, hat.coords);
         resizeHat(hat.width, hat.height, i);
         if (!glassesFrames[i])
-          resizeGlasses(i, face, "new");
+          processGlasses(i, face, "new");
         else
-          resizeGlasses(i, face, "replace");
+          processGlasses(i, face, "replace");
       }
       if (hatFrames[i].show)
         hatFrames[i].src.copyTo(src.rowRange(hatFrames[i].y1, hatFrames[i].y2)
