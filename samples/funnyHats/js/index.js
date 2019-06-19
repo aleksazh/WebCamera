@@ -119,27 +119,41 @@ function detectEyes(face) {
   faceGray.delete();
 }
 
-function resizeGlasses(scaledWidth, scaledHeight, i) {
-  cv.resize(glassesSrc, glassesDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  cv.resize(glassesMask, glassesMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  glassesFrames[i].src = glassesDst.clone();
-  glassesFrames[i].mask = glassesMaskDst.clone();
-}
-
-function getGlassesCoords(leftEye, rightEye,face) {
+function getGlassesCoords(leftEye, rightEye, face) {
   let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
   let scaledWidth = parseInt(glassesData[currentGlasses].scale * eyesWidth);
-  let scaledHeight = parseInt(scaledWidth *
-    (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
+  //let scaledHeight = parseInt(scaledWidth *
+  //  (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
+  let scaledHeight = scaledWidth;
   let yOffset = Number(glassesData[currentGlasses].yOffset);
   let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
   let y2 = y1 + scaledHeight;
   let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
   let x2 = x1 + scaledWidth;
+  let leftEyeCenterX = eyes.get(leftEye).x + eyes.get(leftEye).width / 2;
+  let leftEyeCenterY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
+  let rightEyeCenterX = eyes.get(rightEye).x + eyes.get(rightEye).width / 2;
+  let rightEyeCenterY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
+  let deltaX = rightEyeCenterX - leftEyeCenterX;
+  let deltaY = rightEyeCenterY - leftEyeCenterY;
+  let rad = Math.atan2(deltaY, deltaX);
+  let deg = - rad * (180 / Math.PI);
   return {
-    width: scaledWidth, height: scaledHeight,
+    width: scaledWidth, height: scaledHeight, angle: deg,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
   };
+}
+
+function resizeGlasses(scaledWidth, scaledHeight, angle, i) {
+  let size = new cv.Size(scaledWidth, scaledHeight);
+  cv.resize(glassesSrc, glassesDst, size, 0, 0, cv.INTER_LINEAR);
+  cv.resize(glassesMask, glassesMaskDst, size, 0, 0, cv.INTER_LINEAR);
+  let center = new cv.Point(scaledWidth / 2, scaledHeight / 2);
+  let M = cv.getRotationMatrix2D(center, angle, 1);
+  cv.warpAffine(glassesDst, glassesDst, M, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.warpAffine(glassesMaskDst, glassesMaskDst, M, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  glassesFrames[i].src = glassesDst.clone();
+  glassesFrames[i].mask = glassesMaskDst.clone();
 }
 
 function processGlasses(i, face, option) {
@@ -150,9 +164,11 @@ function processGlasses(i, face, option) {
   else {
     let leftEye = 0;
     let rightEye = 1;
-    if (eyes.get(0).x > eyes.get(1).x)
-      leftEye = 1; rightEye = 0;
-    let glasses = getGlassesCoords(leftEye, rightEye, face);
+    let glasses;
+    if (eyes.get(leftEye).x > eyes.get(rightEye).x)
+      glasses = getGlassesCoords(rightEye, leftEye, face);
+    else
+      glasses = getGlassesCoords(leftEye, rightEye, face);
     // check that glasses coords are in the canvas window
     if (glasses.coords.y1 > 0 && glasses.coords.y2 < height &&
       glasses.coords.x2 < width && glasses.coords.x1 >= 0) {
@@ -163,7 +179,7 @@ function processGlasses(i, face, option) {
         glassesFrames[i].mask.delete();
         glassesFrames.splice(i, 1, glasses.coords);
       }
-      resizeGlasses(glasses.width, glasses.height, i);
+      resizeGlasses(glasses.width, glasses.height, glasses.angle, i);
     } else
       show = false;
   }
