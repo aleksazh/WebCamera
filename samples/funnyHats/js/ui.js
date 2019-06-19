@@ -113,5 +113,5 @@ function deleteGlasses() {
 }
 
 function resizeTabSet() {
-  
+  document.getElementsByClassName("tabset")[0].style.width = `${width}px`;
 }

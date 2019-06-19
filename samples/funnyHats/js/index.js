@@ -93,6 +93,7 @@ function getHatCoords(face) {
   let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
   let x2 = x1 + scaledWidth;
   if (y1 < 0) y1 = 0;
+  console.log("coords", { x1: x1, x2: x2, y1: y1, y2: y2 });
   return {
     width: scaledWidth, height: scaledHeight,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
@@ -134,6 +135,7 @@ function resizeGlasses(i, face, option) {
     let y2 = y1 + scaledHeight;
     let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
     let x2 = x1 + scaledWidth;
+    console.log("coords", { x1: x1, x2: x2, y1: y1, y2: y2 });
     if (y1 > 0 && x2 < width && x1 >= 0) {
       if (option == "new")
         glassesFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2, show: show });
@@ -150,6 +152,7 @@ function resizeGlasses(i, face, option) {
       show = false;
   }
   if (!show) {
+    console.log("don't show");
     if (option == "new")
       glassesFrames.splice(i, 0, { show: show });
     else { // replace if not new
@@ -245,6 +248,7 @@ function onVideoStarted() {
   streaming = true;
   setWidthAndHeight();
   resizeMenu();
+  resizeTabSet();
   // remove "disabled" attr from the second input tab
   document.getElementById("glassesTab").removeAttribute("disabled");
   startVideoProcessing();
