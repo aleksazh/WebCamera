@@ -45,20 +45,23 @@ function startVideoProcessing() {
   setTimeout(processVideo, 0);
 }
 
-function deleteHatsForOldFaces() {
+function deleteObjectsForOldFaces() {
   if (hatFrames.length > faces.size() && faces.size() > 0) {
     for (let i = faces.size(); i < hatFrames.length; ++i) {
-      if (hatFrames[i].src != null && !hatFrames[i].src.isDeleted())
-        hatFrames[i].src.delete();
-      if (hatFrames[i].mask != null && !hatFrames[i].mask.isDeleted())
-        hatFrames[i].mask.delete();
-      if (glassesFrames[i].src != null && !glassesFrames[i].src.isDeleted())
-        glassesFrames[i].src.delete();
-      if (glassesFrames[i].mask != null && !glassesFrames[i].mask.isDeleted())
-        glassesFrames[i].mask.delete();
+      hatFrames[i].src.delete();
+      hatFrames[i].mask.delete();
+      glassesFrames[i].src.delete();
+      glassesFrames[i].mask.delete();
     }
     hatFrames.length = faces.size();
+    glassesFrames.length = faces.size();
   }
+}
+
+function replaceOldHatFrame(i, coords) {
+  hatFrames[i].src.delete();
+  hatFrames[i].mask.delete();
+  hatFrames.splice(i, 1, coords);
 }
 
 function resizeHat(scaledWidth, scaledHeight, i) {
@@ -75,8 +78,8 @@ function resizeHat(scaledWidth, scaledHeight, i) {
   } else {
     // notify not to draw hat
     hatFrames[i].show = false;
-    hatFrames[i].src = null;
-    hatFrames[i].mask = null;
+    hatFrames[i].src = new cv.Mat();
+    hatFrames[i].mask = new cv.Mat();
   }
 }
 
@@ -89,6 +92,7 @@ function getHatCoords(face) {
   let y1 = y2 - scaledHeight;
   let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
   let x2 = x1 + scaledWidth;
+  if (y1 < 0) y1 = 0;
   return {
     width: scaledWidth, height: scaledHeight,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
@@ -109,23 +113,17 @@ function exceedJitterLimit(i, coords) {
 }
 
 function resizeGlasses(i, face, option) {
+  let show = true;
   let faceGray = gray.roi(face);
-  let faceSrc = src.roi(face);
   eyeCascade.detectMultiScale(faceGray, eyes);
-  faceGray.delete(); faceSrc.delete();
-  if (eyes.size() < 2) {
-    if (option == "new")
-      glassesFrames.splice(i, 0, { show: false });
-    else // replace if not new
-      glassesFrames.splice(i, 1, { show: false });
-    glassesFrames[i].src = null;
-    glassesFrames[i].mask = null;
-  } else {
+  faceGray.delete();
+  if (eyes.size() < 2)
+    show = false;
+  else {
     let leftEye = 0;
     let rightEye = 1;
-    if (eyes.get(0).x > eyes.get(1).x) {
+    if (eyes.get(0).x > eyes.get(1).x)
       leftEye = 1; rightEye = 0;
-    }
     // get coordinates for glasses
     let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
     let scaledWidth = parseInt(glasses[currentGlasses].scale * eyesWidth);
@@ -136,23 +134,32 @@ function resizeGlasses(i, face, option) {
     let y2 = y1 + scaledHeight;
     let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
     let x2 = x1 + scaledWidth;
-    if (option == "new")
-      glassesFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2, show: true });
-    else
-      glassesFrames.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2, show: true });
-    cv.resize(glassesSrc, glassesDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-    cv.resize(glassesMask, glassesMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-    glassesFrames[i].src = glassesDst.clone();
-    glassesFrames[i].mask = glassesMaskDst.clone();
+    if (y1 > 0 && x2 < width && x1 >= 0) {
+      if (option == "new")
+        glassesFrames.splice(i, 0, { x1: x1, x2: x2, y1: y1, y2: y2, show: show });
+      else { // replace if not new
+        glassesFrames[i].src.delete();
+        glassesFrames[i].mask.delete();
+        glassesFrames.splice(i, 1, { x1: x1, x2: x2, y1: y1, y2: y2, show: show });
+      }
+      cv.resize(glassesSrc, glassesDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+      cv.resize(glassesMask, glassesMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
+      glassesFrames[i].src = glassesDst.clone();
+      glassesFrames[i].mask = glassesMaskDst.clone();
+    } else
+      show = false;
   }
-}
-
-function replaceOldHatFrame(i, coords) {
-  if (hatFrames[i].src != null && !hatFrames[i].src.isDeleted())
-    hatFrames[i].src.delete();
-  if (hatFrames[i].mask != null && !hatFrames[i].mask.isDeleted())
-    hatFrames[i].mask.delete();
-  hatFrames.splice(i, 1, coords);
+  if (!show) {
+    if (option == "new")
+      glassesFrames.splice(i, 0, { show: show });
+    else { // replace if not new
+      glassesFrames[i].src.delete();
+      glassesFrames[i].mask.delete();
+      glassesFrames.splice(i, 1, { show: show });
+    }
+    glassesFrames[i].src = new cv.Mat();
+    glassesFrames[i].mask = new cv.Mat();
+  }
 }
 
 function processVideo() {
@@ -175,12 +182,11 @@ function processVideo() {
     let scaleFactor = 1.1;
     let minNeighbors = 3;
     faceCascade.detectMultiScale(gray, faces, scaleFactor, minNeighbors);
-    deleteHatsForOldFaces();
+    deleteObjectsForOldFaces();
     // draw hat for each face
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
       let hat = getHatCoords(face);
-      if (hat.coords.y1 < 0) hat.coords.y1 = 0;
       if (!hatFrames[i]) {
         // create new hat frame and glasses frame
         hatFrames.splice(i, 0, hat.coords);
@@ -190,17 +196,17 @@ function processVideo() {
         objectChanged = false;
         replaceOldHatFrame(i, hat.coords);
         resizeHat(hat.width, hat.height, i);
-        resizeGlasses(i, face, "replace");
+        if (!glassesFrames[i])
+          resizeGlasses(i, face, "new");
+        else
+          resizeGlasses(i, face, "replace");
       }
-      if (hatFrames[i].show) {
+      if (hatFrames[i].show)
         hatFrames[i].src.copyTo(src.rowRange(hatFrames[i].y1, hatFrames[i].y2)
           .colRange(hatFrames[i].x1, hatFrames[i].x2), hatFrames[i].mask);
-        if (glassesFrames[i].show) {
-          glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
-            .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
-          console.log(glassesFrames[i].x1, glassesFrames[i].x2, glassesFrames[i].y1, glassesFrames[i].y2);
-        }
-      }
+      if (glassesFrames[i].show)
+        glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
+          .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
     }
     cv.imshow('canvasOutput', src);
 

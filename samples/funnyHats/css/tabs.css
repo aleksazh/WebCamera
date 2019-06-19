@@ -8,6 +8,7 @@
 }
 .tabset {
   width: 640px;
+  display: flex;
 }
 .tabset > label {
   position: relative;

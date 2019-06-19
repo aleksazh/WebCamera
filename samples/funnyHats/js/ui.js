@@ -100,18 +100,18 @@ function createNode(name, carouselName) {
 
 function deleteHats() {
   for (let i = 0; i < hats.length; i++) {
-    if (hats[i].src != null && !hats[i].src.isDeleted())
-      hats[i].src.delete();
-    if (hats[i].mask != null && !hats[i].mask.isDeleted())
-      hats[i].mask.delete();
+    hats[i].src.delete();
+    hats[i].mask.delete();
   }
 }
 
 function deleteGlasses() {
   for (let i = 0; i < glasses.length; i++) {
-    if (glasses[i].src != null && !glasses[i].src.isDeleted())
     glasses[i].src.delete();
-    if (glasses[i].mask != null && !glasses[i].mask.isDeleted())
     glasses[i].mask.delete();
   }
+}
+
+function resizeTabSet() {
+  
 }
