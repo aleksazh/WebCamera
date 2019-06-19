@@ -120,38 +120,50 @@ function detectEyes(face) {
 }
 
 function getGlassesCoords(leftEye, rightEye, face) {
-  let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
-  let scaledWidth = parseInt(glassesData[currentGlasses].scale * eyesWidth);
-  //let scaledHeight = parseInt(scaledWidth *
-  //  (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
-  let scaledHeight = scaledWidth;
-  let yOffset = Number(glassesData[currentGlasses].yOffset);
-  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
-  let y2 = y1 + scaledHeight;
-  let x1 = face.x + eyes.get(leftEye).x + parseInt(eyesWidth / 2 - scaledWidth / 2);
-  let x2 = x1 + scaledWidth;
-  let leftEyeCenterX = eyes.get(leftEye).x + eyes.get(leftEye).width / 2;
-  let leftEyeCenterY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
-  let rightEyeCenterX = eyes.get(rightEye).x + eyes.get(rightEye).width / 2;
-  let rightEyeCenterY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
-  let deltaX = rightEyeCenterX - leftEyeCenterX;
-  let deltaY = rightEyeCenterY - leftEyeCenterY;
+  //let leftEyeCenterX = eyes.get(leftEye).x + eyes.get(leftEye).width / 2;
+  //let leftEyeCenterY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
+  //let rightEyeCenterX = eyes.get(rightEye).x + eyes.get(rightEye).width / 2;
+  //let rightEyeCenterY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
+  let leftEyeStartX = eyes.get(leftEye).x;
+  let leftEyeStartY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
+  let rightEyeEndX = eyes.get(rightEye).x + eyes.get(rightEye).width;
+  let rightEyeEndY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
+  let deltaX = rightEyeEndX - leftEyeStartX;
+  let deltaY = rightEyeEndY - leftEyeStartY;
   let rad = Math.atan2(deltaY, deltaX);
   let deg = - rad * (180 / Math.PI);
+
+  //let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
+  let scaledWidth = parseInt(glassesData[currentGlasses].scale * deltaX);
+  let scaledHeight = parseInt(scaledWidth *
+    (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
+
+  let yOffset = Number(glassesData[currentGlasses].yOffset);
+
+  let glassesCenterXabs = face.x + (eyes.get(rightEye).x + eyes.get(rightEye).width + eyes.get(leftEye).x) / 2;
+  let glassesCenterYabs = face.y + (eyes.get(rightEye).y + eyes.get(rightEye).height / 2 + eyes.get(leftEye).y + eyes.get(leftEye).height / 2) / 2;
+
+  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
+  let y2 = y1 + scaledHeight;
+  let x1 = face.x + eyes.get(leftEye).x + parseInt(deltaX / 2 - scaledWidth / 2);
+  let x2 = x1 + scaledWidth;
+
   return {
-    width: scaledWidth, height: scaledHeight, angle: deg,
+    scaledWidth: scaledWidth, scaledHeight: scaledHeight, angle: deg,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
   };
 }
 
-function resizeGlasses(scaledWidth, scaledHeight, angle, i) {
-  let size = new cv.Size(scaledWidth, scaledHeight);
+function resizeGlasses(glasses, i) {
+  let size = new cv.Size(glasses.scaledWidth, glasses.scaledHeight);
   cv.resize(glassesSrc, glassesDst, size, 0, 0, cv.INTER_LINEAR);
   cv.resize(glassesMask, glassesMaskDst, size, 0, 0, cv.INTER_LINEAR);
-  let center = new cv.Point(scaledWidth / 2, scaledHeight / 2);
-  let M = cv.getRotationMatrix2D(center, angle, 1);
-  cv.warpAffine(glassesDst, glassesDst, M, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  cv.warpAffine(glassesMaskDst, glassesMaskDst, M, size, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  let center = new cv.Point(glasses.scaledWidth / 2, glasses.scaledHeight / 2);
+  let dsize = new cv.Size(glasses.scaledWidth, glasses.scaledWidth);
+  let M = cv.getRotationMatrix2D(center, glasses.angle, 1);
+  cv.warpAffine(glassesDst, glassesDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.warpAffine(glassesMaskDst, glassesMaskDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  glassesFrames[i].y2 = glassesFrames[i].y1 + glasses.scaledWidth;
   glassesFrames[i].src = glassesDst.clone();
   glassesFrames[i].mask = glassesMaskDst.clone();
 }
@@ -179,7 +191,7 @@ function processGlasses(i, face, option) {
         glassesFrames[i].mask.delete();
         glassesFrames.splice(i, 1, glasses.coords);
       }
-      resizeGlasses(glasses.width, glasses.height, glasses.angle, i);
+      resizeGlasses(glasses, i);
     } else
       show = false;
   }
@@ -240,7 +252,7 @@ function processVideo() {
           .colRange(hatFrames[i].x1, hatFrames[i].x2), hatFrames[i].mask);
       if (glassesFrames[i].show)
         glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
-          .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
+          .colRange(glassesFrames[i].x1, glassesFrames[i].x2));
     }
     cv.imshow('canvasOutput', src);
 
