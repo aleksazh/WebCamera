@@ -120,50 +120,98 @@ function detectEyes(face) {
 }
 
 function getGlassesCoords(leftEye, rightEye, face) {
-  //let leftEyeCenterX = eyes.get(leftEye).x + eyes.get(leftEye).width / 2;
-  //let leftEyeCenterY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
-  //let rightEyeCenterX = eyes.get(rightEye).x + eyes.get(rightEye).width / 2;
-  //let rightEyeCenterY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
   let leftEyeStartX = eyes.get(leftEye).x;
   let leftEyeStartY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
   let rightEyeEndX = eyes.get(rightEye).x + eyes.get(rightEye).width;
   let rightEyeEndY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
+  console.log("eye line", leftEyeStartX, leftEyeStartY, rightEyeEndX, rightEyeEndY);
   let deltaX = rightEyeEndX - leftEyeStartX;
   let deltaY = rightEyeEndY - leftEyeStartY;
-  let rad = Math.atan2(deltaY, deltaX);
-  let deg = - rad * (180 / Math.PI);
+  console.log("delta", deltaX, deltaY);
+  let rad = -Math.atan2(deltaY, deltaX);
+  let deg = rad * (180 / Math.PI);
+  console.log("angle", rad, deg);
 
   //let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
   let scaledWidth = parseInt(glassesData[currentGlasses].scale * deltaX);
   let scaledHeight = parseInt(scaledWidth *
     (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
-
   let yOffset = Number(glassesData[currentGlasses].yOffset);
+  console.log("scaled", scaledWidth, scaledHeight, yOffset);
 
-  let glassesCenterXabs = face.x + (eyes.get(rightEye).x + eyes.get(rightEye).width + eyes.get(leftEye).x) / 2;
-  let glassesCenterYabs = face.y + (eyes.get(rightEye).y + eyes.get(rightEye).height / 2 + eyes.get(leftEye).y + eyes.get(leftEye).height / 2) / 2;
+  //let centerX = face.x + (eyes.get(rightEye).x + eyes.get(rightEye).width + eyes.get(leftEye).x) / 2;
+  //let centerY = face.y + (eyes.get(rightEye).y + eyes.get(rightEye).height / 2 + eyes.get(leftEye).y + eyes.get(leftEye).height / 2) / 2;
+  //console.log("center", centerX, centerY);
 
-  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
-  let y2 = y1 + scaledHeight;
   let x1 = face.x + eyes.get(leftEye).x + parseInt(deltaX / 2 - scaledWidth / 2);
   let x2 = x1 + scaledWidth;
+  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
+  let y2 = y1 + scaledHeight;
+  console.log("coords", x1, y1, x2, y2);
+
+  let centerX = x1 + scaledWidth / 2;
+  let centerY = y1 + scaledHeight / 2;
+  console.log("center", centerX, centerY);
+
+  // points of rotated rectangle
+  // const sin = Math.sin(rad);
+  // const cos = Math.cos(rad);
+  // console.log("sin-cos", sin, cos);
+  // let x1r = parseInt(centerX + (x1 - centerX) * cos + (y1 - centerY) * sin);
+  // let y1r = parseInt(centerY - (x1 - centerX) * sin + (y1 - centerY) * cos);
+  // let x2r = parseInt(centerX + (x2 - centerX) * cos + (y1 - centerY) * sin);
+  // let y2r = parseInt(centerX - (x2 - centerX) * sin + (y1 - centerY) * cos);
+  // let x3r = parseInt(centerY + (x2 - centerX) * cos + (y2 - centerY) * sin);
+  // let y3r = parseInt(centerY - (x2 - centerX) * sin + (y2 - centerY) * cos);
+  // let x4r = parseInt(centerX + (x1 - centerX) * cos + (y2 - centerY) * sin);
+  // let y4r = parseInt(centerY - (x1 - centerX) * sin + (y2 - centerY) * cos);
+  // console.log("xy", x1r, y1r, x2r, y2r, x3r, y3r, x4r, y4r);
+
+  // if (x4r < x1r) {
+  //   x1 = x4r; x2 = x2r;
+  // } else {
+  //   x1 = x1r; x2 = x3r;
+  // }
+  // if (y1r < y2r) {
+  //   y1 = y1r; y2 = y3r;
+  // } else {
+  //   y1 = y2r; y2 = y4r;
+  // }
+  console.log("rotated coords", x1, y1, x2, y2);
+
+  let rotatedWidth = x2 - x1;
+  let rotatedHeight = y2 - y1;
+  console.log("rot w&h", rotatedWidth, rotatedHeight);
 
   return {
-    scaledWidth: scaledWidth, scaledHeight: scaledHeight, angle: deg,
+    sw: scaledWidth, sh: scaledHeight, angle: deg, rw: rotatedWidth, rh: rotatedHeight,
     coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
   };
 }
 
 function resizeGlasses(glasses, i) {
-  let size = new cv.Size(glasses.scaledWidth, glasses.scaledHeight);
+  let rotatedSrc = new cv.Mat(glasses.rh, glasses.rw, cv.CV_8UC4);
+  let rotatedMask = new cv.Mat(glasses.rh, glasses.rw, cv.CV_8UC4);
+
+  let size = new cv.Size(glasses.sw, glasses.sh);
   cv.resize(glassesSrc, glassesDst, size, 0, 0, cv.INTER_LINEAR);
   cv.resize(glassesMask, glassesMaskDst, size, 0, 0, cv.INTER_LINEAR);
-  let center = new cv.Point(glasses.scaledWidth / 2, glasses.scaledHeight / 2);
-  let dsize = new cv.Size(glasses.scaledWidth, glasses.scaledWidth);
+
+  // let x1 = parseInt((glasses.rw - glasses.sw) / 2);
+  // let y1 = parseInt((glasses.rh - glasses.sh) / 2);
+  // glassesDst.copyTo(rotatedSrc.rowRange(y1, y1 + glasses.sh)
+  //   .colRange(x1, x1 + glasses.sw));
+  // glassesMaskDst.copyTo(rotatedMask.rowRange(y1, y1 + glasses.sh)
+  //   .colRange(x1, x1 + glasses.sw));
+
+  let center = new cv.Point(glasses.rw / 2, glasses.rh / 2);
+  let dsize = new cv.Size(glasses.rw, glasses.rh);
   let M = cv.getRotationMatrix2D(center, glasses.angle, 1);
-  cv.warpAffine(glassesDst, glassesDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  cv.warpAffine(glassesMaskDst, glassesMaskDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  glassesFrames[i].y2 = glassesFrames[i].y1 + glasses.scaledWidth;
+  cv.warpAffine(rotatedSrc, rotatedSrc, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.warpAffine(rotatedMask, rotatedMask, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+  //glassesFrames[i].src = rotatedSrc;
+  //glassesFrames[i].mask = rotatedMask;
   glassesFrames[i].src = glassesDst.clone();
   glassesFrames[i].mask = glassesMaskDst.clone();
 }
@@ -252,7 +300,7 @@ function processVideo() {
           .colRange(hatFrames[i].x1, hatFrames[i].x2), hatFrames[i].mask);
       if (glassesFrames[i].show)
         glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
-          .colRange(glassesFrames[i].x1, glassesFrames[i].x2));
+          .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
     }
     cv.imshow('canvasOutput', src);
 
