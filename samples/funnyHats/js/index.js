@@ -1,259 +1,26 @@
 let utils = new Utils('errorMessage');
+
 let resolution = window.innerWidth < 700 ? 'qvga' : 'vga';
-//let resolution = 'qvga';
+const FPS = 30;
+
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 let canvasContext = canvasOutput.getContext('2d');
-let streaming = false;
-let src = null;
-let cap = null;
-let faces = null;
-let eyes = null;
-let faceCascade = null;
-let eyeCascade = null;
-let hatDst = null;
-let hatMaskDst = null;
-let hatFrames = []; // last drawn hat frame for each face
-let glassesDst = null;
-let glassesMaskDst = null;
-let glassesFrames = []; // last drawn glasses frame for each face
+
 let width = 0;
 let height = 0;
 
-const faceDetectionPath = 'haarcascade_frontalface_default.xml';
-const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
-const eyeDetectionPath = 'haarcascade_eye.xml';
-const eyeDetectionUrl = 'resources/haarcascade_eye.xml';
-const JITTER_LIMIT = 3;
+let streaming = false;
+let cap = null;
+let src = null;
+let gray = null;
 
-
-const FPS = 30;
 function startVideoProcessing() {
   src = new cv.Mat(height, width, cv.CV_8UC4);
   gray = new cv.Mat();
   cap = new cv.VideoCapture(video);
-  faces = new cv.RectVector();
-  faceCascade = new cv.CascadeClassifier();
-  faceCascade.load(faceDetectionPath);
-  eyes = new cv.RectVector();
-  eyeCascade = new cv.CascadeClassifier();
-  eyeCascade.load(eyeDetectionPath);
-  hatDst = new cv.Mat();
-  hatMaskDst = new cv.Mat();
-  glassesDst = new cv.Mat();
-  glassesMaskDst = new cv.Mat();
+  initOpencvVars();
   setTimeout(processVideo, 0);
-}
-
-function deleteObjectsForOldFaces() {
-  if (hatFrames.length > faces.size() && faces.size() > 0) {
-    for (let i = faces.size(); i < hatFrames.length; ++i) {
-      hatFrames[i].src.delete();
-      hatFrames[i].mask.delete();
-      glassesFrames[i].src.delete();
-      glassesFrames[i].mask.delete();
-    }
-    hatFrames.length = faces.size();
-    glassesFrames.length = faces.size();
-  }
-}
-
-function replaceOldHatFrame(i, coords) {
-  hatFrames[i].src.delete();
-  hatFrames[i].mask.delete();
-  hatFrames.splice(i, 1, coords);
-}
-
-function getHatCoords(face) {
-  let scaledWidth = parseInt(hatsData[currentHat].scale * face.width);
-  let scaledHeight = parseInt(scaledWidth *
-    (hatsData[currentHat].src.rows / hatsData[currentHat].src.cols));
-  let yOffset = Number(hatsData[currentHat].yOffset);
-  let y2 = face.y + Math.round(yOffset * face.height);
-  let y1 = y2 - scaledHeight;
-  let x1 = face.x + parseInt(face.width / 2 - scaledWidth / 2);
-  let x2 = x1 + scaledWidth;
-  if (y1 < 0) y1 = 0;
-  return {
-    width: scaledWidth, height: scaledHeight,
-    coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
-  };
-}
-
-function resizeHat(scaledWidth, scaledHeight, i) {
-  cv.resize(hatSrc, hatDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  cv.resize(hatMask, hatMaskDst, new cv.Size(scaledWidth, scaledHeight), 0, 0, cv.INTER_LINEAR);
-  let hat = hatFrames[i];
-  if (hat.y1 > 0 && hat.y2 < height && hat.x2 < width && hat.x1 >= 0) {
-    // copy full image of hat
-    hat.src = hatDst.clone();
-    hat.mask = hatMaskDst.clone();
-  } else if (hat.y1 == 0 && hat.y2 < height && hat.x2 < width && hat.x1 >= 0) {
-    // copy the part of the hat that is below y=0
-    hat.src = hatDst.roi(new cv.Rect(0, scaledHeight - hat.y2, scaledWidth, hat.y2));
-    hat.mask = hatMaskDst.roi(new cv.Rect(0, scaledHeight - hat.y2, scaledWidth, hat.y2));
-  } else {
-    // notify not to draw hat
-    hat.show = false;
-    hat.src = new cv.Mat();
-    hat.mask = new cv.Mat();
-  }
-}
-
-function exceedJitterLimit(i, coords) {
-  if (hatFrames[i].x1 > coords.x1 + JITTER_LIMIT ||
-    hatFrames[i].x1 < coords.x1 - JITTER_LIMIT ||
-    hatFrames[i].y1 > coords.y1 + JITTER_LIMIT ||
-    hatFrames[i].y1 < coords.y1 - JITTER_LIMIT ||
-    hatFrames[i].x2 > coords.x2 + JITTER_LIMIT ||
-    hatFrames[i].x2 < coords.x2 - JITTER_LIMIT ||
-    hatFrames[i].y2 > coords.y2 + JITTER_LIMIT ||
-    hatFrames[i].y2 < coords.y2 - JITTER_LIMIT)
-    return true;
-  else return false;
-}
-
-function detectEyes(face) {
-  let faceGray = gray.roi(face);
-  eyeCascade.detectMultiScale(faceGray, eyes);
-  faceGray.delete();
-}
-
-function getGlassesCoords(leftEye, rightEye, face) {
-  let leftEyeStartX = eyes.get(leftEye).x;
-  let leftEyeStartY = eyes.get(leftEye).y + eyes.get(leftEye).height / 2;
-  let rightEyeEndX = eyes.get(rightEye).x + eyes.get(rightEye).width;
-  let rightEyeEndY = eyes.get(rightEye).y + eyes.get(rightEye).height / 2;
-  console.log("eye line", leftEyeStartX, leftEyeStartY, rightEyeEndX, rightEyeEndY);
-  let deltaX = rightEyeEndX - leftEyeStartX;
-  let deltaY = rightEyeEndY - leftEyeStartY;
-  console.log("delta", deltaX, deltaY);
-  let rad = -Math.atan2(deltaY, deltaX);
-  let deg = rad * (180 / Math.PI);
-  console.log("angle", rad, deg);
-
-  //let eyesWidth = eyes.get(rightEye).x + eyes.get(rightEye).width - eyes.get(leftEye).x;
-  let scaledWidth = parseInt(glassesData[currentGlasses].scale * deltaX);
-  let scaledHeight = parseInt(scaledWidth *
-    (glassesData[currentGlasses].src.rows / glassesData[currentGlasses].src.cols));
-  let yOffset = Number(glassesData[currentGlasses].yOffset);
-  console.log("scaled", scaledWidth, scaledHeight, yOffset);
-
-  //let centerX = face.x + (eyes.get(rightEye).x + eyes.get(rightEye).width + eyes.get(leftEye).x) / 2;
-  //let centerY = face.y + (eyes.get(rightEye).y + eyes.get(rightEye).height / 2 + eyes.get(leftEye).y + eyes.get(leftEye).height / 2) / 2;
-  //console.log("center", centerX, centerY);
-
-  let x1 = face.x + eyes.get(leftEye).x + parseInt(deltaX / 2 - scaledWidth / 2);
-  let x2 = x1 + scaledWidth;
-  let y1 = face.y + eyes.get(leftEye).y - Math.round(yOffset * eyes.get(leftEye).height);
-  let y2 = y1 + scaledHeight;
-  console.log("coords", x1, y1, x2, y2);
-
-  let centerX = x1 + scaledWidth / 2;
-  let centerY = y1 + scaledHeight / 2;
-  console.log("center", centerX, centerY);
-
-  // points of rotated rectangle
-  // const sin = Math.sin(rad);
-  // const cos = Math.cos(rad);
-  // console.log("sin-cos", sin, cos);
-  // let x1r = parseInt(centerX + (x1 - centerX) * cos + (y1 - centerY) * sin);
-  // let y1r = parseInt(centerY - (x1 - centerX) * sin + (y1 - centerY) * cos);
-  // let x2r = parseInt(centerX + (x2 - centerX) * cos + (y1 - centerY) * sin);
-  // let y2r = parseInt(centerX - (x2 - centerX) * sin + (y1 - centerY) * cos);
-  // let x3r = parseInt(centerY + (x2 - centerX) * cos + (y2 - centerY) * sin);
-  // let y3r = parseInt(centerY - (x2 - centerX) * sin + (y2 - centerY) * cos);
-  // let x4r = parseInt(centerX + (x1 - centerX) * cos + (y2 - centerY) * sin);
-  // let y4r = parseInt(centerY - (x1 - centerX) * sin + (y2 - centerY) * cos);
-  // console.log("xy", x1r, y1r, x2r, y2r, x3r, y3r, x4r, y4r);
-
-  // if (x4r < x1r) {
-  //   x1 = x4r; x2 = x2r;
-  // } else {
-  //   x1 = x1r; x2 = x3r;
-  // }
-  // if (y1r < y2r) {
-  //   y1 = y1r; y2 = y3r;
-  // } else {
-  //   y1 = y2r; y2 = y4r;
-  // }
-  console.log("rotated coords", x1, y1, x2, y2);
-
-  let rotatedWidth = x2 - x1;
-  let rotatedHeight = y2 - y1;
-  console.log("rot w&h", rotatedWidth, rotatedHeight);
-
-  return {
-    sw: scaledWidth, sh: scaledHeight, angle: deg, rw: rotatedWidth, rh: rotatedHeight,
-    coords: { x1: x1, x2: x2, y1: y1, y2: y2, show: true }
-  };
-}
-
-function resizeGlasses(glasses, i) {
-  let rotatedSrc = new cv.Mat(glasses.rh, glasses.rw, cv.CV_8UC4);
-  let rotatedMask = new cv.Mat(glasses.rh, glasses.rw, cv.CV_8UC4);
-
-  let size = new cv.Size(glasses.sw, glasses.sh);
-  cv.resize(glassesSrc, glassesDst, size, 0, 0, cv.INTER_LINEAR);
-  cv.resize(glassesMask, glassesMaskDst, size, 0, 0, cv.INTER_LINEAR);
-
-  // let x1 = parseInt((glasses.rw - glasses.sw) / 2);
-  // let y1 = parseInt((glasses.rh - glasses.sh) / 2);
-  // glassesDst.copyTo(rotatedSrc.rowRange(y1, y1 + glasses.sh)
-  //   .colRange(x1, x1 + glasses.sw));
-  // glassesMaskDst.copyTo(rotatedMask.rowRange(y1, y1 + glasses.sh)
-  //   .colRange(x1, x1 + glasses.sw));
-
-  let center = new cv.Point(glasses.rw / 2, glasses.rh / 2);
-  let dsize = new cv.Size(glasses.rw, glasses.rh);
-  let M = cv.getRotationMatrix2D(center, glasses.angle, 1);
-  cv.warpAffine(rotatedSrc, rotatedSrc, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  cv.warpAffine(rotatedMask, rotatedMask, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
-  //glassesFrames[i].src = rotatedSrc;
-  //glassesFrames[i].mask = rotatedMask;
-  glassesFrames[i].src = glassesDst.clone();
-  glassesFrames[i].mask = glassesMaskDst.clone();
-}
-
-function processGlasses(i, face, option) {
-  detectEyes(face);
-  let show = true;
-  if (eyes.size() < 2)
-    show = false;
-  else {
-    let leftEye = 0;
-    let rightEye = 1;
-    let glasses;
-    if (eyes.get(leftEye).x > eyes.get(rightEye).x)
-      glasses = getGlassesCoords(rightEye, leftEye, face);
-    else
-      glasses = getGlassesCoords(leftEye, rightEye, face);
-    // check that glasses coords are in the canvas window
-    if (glasses.coords.y1 > 0 && glasses.coords.y2 < height &&
-      glasses.coords.x2 < width && glasses.coords.x1 >= 0) {
-      if (option == "new")
-        glassesFrames.splice(i, 0, glasses.coords);
-      else { // replace if not new
-        glassesFrames[i].src.delete();
-        glassesFrames[i].mask.delete();
-        glassesFrames.splice(i, 1, glasses.coords);
-      }
-      resizeGlasses(glasses, i);
-    } else
-      show = false;
-  }
-  if (!show) {
-    if (option == "new")
-      glassesFrames.splice(i, 0, { show: show });
-    else { // replace if not new
-      glassesFrames[i].src.delete();
-      glassesFrames[i].mask.delete();
-      glassesFrames.splice(i, 1, { show: show });
-    }
-    glassesFrames[i].src = new cv.Mat();
-    glassesFrames[i].mask = new cv.Mat();
-  }
 }
 
 function processVideo() {
@@ -261,32 +28,34 @@ function processVideo() {
     if (!streaming) {
       // clean and stop
       src.delete(); gray.delete();
-      hatDst.delete(); hatMaskDst.delete();
-      glassesDst.delete(); glassesMaskDst.delete();
-      faces.delete(); faceCascade.delete();
-      eyes.delete(); eyeCascade.delete();
+      deleteOpencvObjects();
       deleteHats(); deleteGlasses();
       return;
     }
     stats.begin();
     let begin = Date.now();
     cap.read(src);
+
     // detect faces
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     let scaleFactor = 1.1;
     let minNeighbors = 3;
     faceCascade.detectMultiScale(gray, faces, scaleFactor, minNeighbors);
     deleteObjectsForOldFaces();
-    // draw hat for each face
+
+    // process hat and glasses for each face
     for (let i = 0; i < faces.size(); ++i) {
       let face = faces.get(i);
       let hat = getHatCoords(face);
+
       if (!hatFrames[i]) {
         // create new hat frame and glasses frame
         hatFrames.splice(i, 0, hat.coords);
         resizeHat(hat.width, hat.height, i);
         processGlasses(i, face, "new");
+
       } else if (exceedJitterLimit(i, hat.coords) || objectChanged) {
+        // replace old hat frame and glasses frame
         objectChanged = false;
         replaceOldHatFrame(i, hat.coords);
         resizeHat(hat.width, hat.height, i);
@@ -295,12 +64,17 @@ function processVideo() {
         else
           processGlasses(i, face, "replace");
       }
+
+      // draw hat
       if (hatFrames[i].show)
         hatFrames[i].src.copyTo(src.rowRange(hatFrames[i].y1, hatFrames[i].y2)
           .colRange(hatFrames[i].x1, hatFrames[i].x2), hatFrames[i].mask);
+      // draw glasses
       if (glassesFrames[i].show)
-        glassesFrames[i].src.copyTo(src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
-          .colRange(glassesFrames[i].x1, glassesFrames[i].x2), glassesFrames[i].mask);
+        glassesFrames[i].src.copyTo(
+          src.rowRange(glassesFrames[i].y1, glassesFrames[i].y2)
+            .colRange(glassesFrames[i].x1, glassesFrames[i].x2),
+          glassesFrames[i].mask);
     }
     cv.imshow('canvasOutput', src);
 
