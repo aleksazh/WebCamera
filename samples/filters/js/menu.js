@@ -72,7 +72,9 @@ window.onresize = function () {
 };
 
 // resize menu for current canvas size
-function resizeMenu() {
+function resizeMenu(smallCanvasFormat = "deviceFormat",
+                    heightDependenceCoef = 0, scale = 0.2) {
+
   const VGA_WIDTH = 640;
   // carousel
   let buttonWidth = leftButtons[0].offsetWidth;
@@ -84,10 +86,17 @@ function resizeMenu() {
   let scProperties = document.querySelector(".small-canvas");
   let scPadding = parseInt(getComputedStyle(scProperties).padding);
   let cards = document.getElementsByClassName("card");
+  let smallH = scale * height;
+  let smallW = 0;
+  if (smallCanvasFormat == "customFormat") {
+    smallW = smallH * heightDependenceCoef;
+  } else if (smallCanvasFormat == "deviceFormat") {
+    smallW = scale * width;
+  }
   for (let i = 0; i < smallCanvases.length; i++) {
-    smallCanvases[i].style.height = `${parseInt(height / 5)}px`;
-    smallCanvases[i].style.width = `${parseInt(width / 5)}px`;
-    cards[i].style.width = `${parseInt(width / 5 + 2 * scPadding)}px`;
+    smallCanvases[i].style.height = `${parseInt(smallH)}px`;
+    smallCanvases[i].style.width = `${parseInt(smallW)}px`;
+    cards[i].style.width = `${parseInt(smallW + 2 * scPadding)}px`;
     if (width < VGA_WIDTH) {
       cards[i].style.fontSize = `16px`;
     }

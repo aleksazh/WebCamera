@@ -93,8 +93,8 @@ function onVideoStarted() {
   streaming = true;
   video.width = video.videoWidth;
   video.height = video.videoHeight;
-  canvasOutput.width = video.videoWidth;
-  canvasOutput.height = video.videoHeight;
+  video.setAttribute('width', video.videoWidth);
+  video.setAttribute('height', video.videoHeight);
   canvasOutput.style.width = `${video.videoWidth}px`;
   canvasOutput.style.height = `${video.videoHeight}px`;
   startVideoProcessing();

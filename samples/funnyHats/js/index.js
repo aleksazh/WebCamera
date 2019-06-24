@@ -88,13 +88,12 @@ function processVideo() {
 };
 
 function setWidthAndHeight() {
-  height = video.videoHeight;
   width = video.videoWidth;
+  height = video.videoHeight;
   video.setAttribute('width', width);
   video.setAttribute('height', height);
-  let canvas = document.getElementById("canvasOutput");
-  canvas.style.height = `${height}px`;
-  canvas.style.width = `${width}px`;
+  canvasOutput.style.width = `${width}px`;
+  canvasOutput.style.height = `${height}px`;
   document.getElementsByClassName("canvas-wrapper")[0].style.height =
     `${height}px`;
 }
@@ -112,7 +111,8 @@ function startCamera() {
 function onVideoStarted() {
   streaming = true;
   setWidthAndHeight();
-  resizeMenu();
+  const heightDependenceCoef = 320 / 240; // depends on hat image resolution
+  resizeMenu("customFormat", heightDependenceCoef);
   resizeTabSet();
   // remove "disabled" attr from the second input tab
   document.getElementById("glassesTab").removeAttribute("disabled");

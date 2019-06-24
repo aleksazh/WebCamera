@@ -1,3 +1,6 @@
+let stats = null;
+let filterName = document.getElementById('filterName');
+let controls;
 let settingsOnScreen = true;
 
 let filters = {
@@ -86,10 +89,6 @@ function showOrHideSettings() {
     openFilterOptions(controls.filter);
   }
 }
-
-let filterName = document.getElementById('filterName');
-let controls;
-let stats = null;
 
 function initUI() {
   initStats();

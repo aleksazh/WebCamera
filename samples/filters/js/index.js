@@ -98,15 +98,14 @@ function startCamera() {
 }
 
 function setWidthAndHeight() {
-  height = video.videoHeight;
   width = video.videoWidth;
-  smallHeight = parseInt(video.videoHeight / 5);
+  height = video.videoHeight;
   smallWidth = parseInt(video.videoWidth / 5);
+  smallHeight = parseInt(video.videoHeight / 5);
   video.setAttribute('width', width);
   video.setAttribute('height', height);
-  let canvas = document.getElementById("canvasOutput");
-  canvas.style.height = `${height}px`;
-  canvas.style.width = `${width}px`;
+  canvasOutput.style.width = `${width}px`;
+  canvasOutput.style.height = `${height}px`;
   document.getElementsByClassName("canvas-wrapper")[0].style.height =
     `${height}px`;
 }
