@@ -113,7 +113,7 @@ function exceedJitterLimit(i, coords) {
 
 function detectEyes(face) {
   let faceGray = gray.roi(face);
-  eyeCascade.detectMultiScale(faceGray, eyes);
+  eyeCascade.detectMultiScale(faceGray, eyes, 1.1, 3);
   faceGray.delete();
 }
 

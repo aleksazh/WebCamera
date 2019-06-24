@@ -60,7 +60,7 @@ function processVideo() {
       // detect eyes in face ROI
       let faceGray = gray.roi(face);
       let faceSrc = src.roi(face);
-      eyeCascade.detectMultiScale(faceGray, eyes);
+      eyeCascade.detectMultiScale(faceGray, eyes, 1.1, 3);
       for (let j = 0; j < eyes.size(); ++j) {
         let point1 = new cv.Point(eyes.get(j).x, eyes.get(j).y);
         let point2 = new cv.Point(eyes.get(j).x + eyes.get(j).width,
