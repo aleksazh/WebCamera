@@ -12,9 +12,9 @@ let glassesMaskDst = null;
 let glassesFrames = []; // last drawn glasses frame for each face
 
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
-const faceDetectionUrl = 'resources/haarcascade_frontalface_default.xml';
+const faceDetectionUrl = '../../data/classifiers/haarcascade_frontalface_default.xml';
 const eyeDetectionPath = 'haarcascade_eye.xml';
-const eyeDetectionUrl = 'resources/haarcascade_eye.xml';
+const eyeDetectionUrl = '../../data/classifiers/haarcascade_eye.xml';
 
 const JITTER_LIMIT = 3;
 

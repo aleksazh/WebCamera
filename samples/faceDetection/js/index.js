@@ -12,9 +12,9 @@ let eyes = null;
 let faceCascade = null;
 let eyeCascade = null;
 const faceDetectionPath = 'haarcascade_frontalface_default.xml';
-const faceDetectionUrl = 'classifiers/haarcascade_frontalface_default.xml';
+const faceDetectionUrl = '../../data/classifiers/haarcascade_frontalface_default.xml';
 const eyeDetectionPath = 'haarcascade_eye.xml';
-const eyeDetectionUrl = 'classifiers/haarcascade_eye.xml';
+const eyeDetectionUrl = '../../data/classifiers/haarcascade_eye.xml';
 const faceColor = [0, 255, 255, 255];
 const eyesColor = [0, 0, 255, 255];
 

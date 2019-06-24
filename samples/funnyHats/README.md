@@ -35,5 +35,5 @@ cv.warpAffine(glassesMaskDst, glassesMaskDst, glasses.rotMat, rSize);
 
 ## References
 
-1. [Face and eyes detection](../faceDetection/README.md)
-2. [Geometric Transformations of Images](https://docs.opencv.org/3.4/dd/d52/tutorial_js_geometric_transformations.html)
+1. [Face and eyes detection (OpenCV)](../faceDetection/README.md)
+2. [Geometric Transformations of Images (OpenCV)](https://docs.opencv.org/3.4/dd/d52/tutorial_js_geometric_transformations.html)

@@ -26,7 +26,7 @@ function initUI() {
   // now we have canvases and can create menu
   let menuScript = document.createElement('script');
   menuScript.type = 'text/javascript';
-  menuScript.src = '../filters/js/menu.js';
+  menuScript.src = '../../utils/menu.js';
   document.body.appendChild(menuScript);
 }
 
