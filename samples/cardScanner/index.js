@@ -1,8 +1,34 @@
 let utils = new Utils('errorMessage');
 
-utils.loadOpenCv(() => {
-  let cardImg = cv.imread('cardImage');
+function resize(image, width = 'undefined', height = 'undefined', inter = cv.INTER_AREA) {
+  // Initialize the dimensions of the image to be resized and
+  // grab the image size.
+  let dim;
 
+  // If both the width and height are undefined, then return the
+  // original image.
+  if (width == 'undefined' && height == 'undefined')
+    return image;
+
+  let ratio;
+  if (width == 'undefined') {
+    // Calculate the ratio of the height and construct the
+    // dimensions.
+    ratio = height / image.rows;
+    dim = new cv.Size(parseInt(image.cols * ratio), height);
+  }
+  else {
+    // calculate the ratio of the width and construct the
+    // dimensions
+    ratio = width / image.cols;
+    dim = new cv.Size(width, parseInt(image.rows * ratio));
+  }
+
+  // resize the image
+  cv.resize(image, image, dim, interpolation = inter);
+}
+
+utils.loadOpenCv(() => {
   // Load the reference OCR-A image from disk, convert it to grayscale,
   // and threshold it, such that the digits appear as *white* on a
   // *black* background and invert it, such that the digits appear
@@ -23,8 +49,6 @@ utils.loadOpenCv(() => {
   let dst = cv.Mat.zeros(digitsImg.rows, digitsImg.cols, cv.CV_8UC3);
   cv.findContours(digitsImg, ocrContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-  //refCnts = ocrContours.sort_contours(refCnts, method="left-to-right")[0]
-
   for (let i = 0; i < ocrContours.size(); ++i) {
     let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
       Math.round(Math.random() * 255));
@@ -33,20 +57,169 @@ utils.loadOpenCv(() => {
   canvas = document.createElement('canvas');
   document.getElementsByTagName('body')[0].append(canvas);
   cv.imshow(canvas, dst);
-  ocrContours.delete(); hierarchy.delete(); dst.delete();
-
 
   // Loop over the OCR-A reference contours.
-  let digits = {};
+  let digits = [];
 
-//for (i, c) in enumerate(refCnts):
-	// Compute the bounding box for the digit, extract it, and resize
-	// it to a fixed size.
-//	(x, y, w, h) = cv2.boundingRect(c)
-//	roi = ref[y:y + h, x:x + w]
-//	roi = cv2.resize(roi, (57, 88))
+  for (let i = 0; i < ocrContours.size(); ++i) {
+    // Compute the bounding box for the digit, extract it, and resize
+    // it to a fixed size.
+    let rect = cv.boundingRect(ocrContours.get(i));
+    let roi = new cv.Mat();
+    let roiSize = new cv.Size(57, 88);
+    roi = digitsImg.roi(rect);
+    cv.resize(roi, roi, roiSize);
+    // Update the digits dictionary, mapping the digit name to the ROI.
+    digits[i] = roi;
+  }
+  digits.reverse();
 
-	// Update the digits dictionary, mapping the digit name to the ROI.
-	digits[i] = roi
+  // Initialize a rectangular (wider than it is tall) and square
+  // structuring kernel.
+  let rectKernel = new cv.Mat();
+  let sqKernel = new cv.Mat();
+  let rectSize = new cv.Size(9, 3);
+  let squareSize = new cv.Size(5, 5);
+  rectKernel = cv.getStructuringElement(cv.MORPH_RECT, rectSize);
+  sqKernel = cv.getStructuringElement(cv.MORPH_RECT, squareSize);
+
+  // Load the input image, resize it, and convert it to grayscale.
+  let cardImg = cv.imread('cardImage');
+  resize(cardImg, width = 300);
+  let grayCard = new cv.Mat();
+  cv.cvtColor(cardImg, grayCard, cv.COLOR_BGR2GRAY);
+
+  canvas = document.createElement('canvas');
+  document.getElementsByTagName('body')[0].append(canvas);
+  cv.imshow(canvas, grayCard);
+
+  // Apply a tophat (whitehat) morphological operator to find light
+  // regions against a dark background (i.e., the credit card numbers).
+  let tophat = new cv.Mat();
+  cv.morphologyEx(grayCard, tophat, cv.MORPH_TOPHAT, rectKernel)
+
+  canvas = document.createElement('canvas');
+  document.getElementsByTagName('body')[0].append(canvas);
+  cv.imshow(canvas, tophat);
+
+  // Compute the Scharr gradient of the tophat image, then scale
+  // the rest back into the range [0, 255].
+  let gradX = new cv.Mat();
+  cv.Sobel(tophat, gradX, cv.CV_32F, 1, 0, 3);
+  cv.convertScaleAbs(gradX, gradX, 1, 0);
+  // gradX = np.absolute(gradX);
+  //(minVal, maxVal) = (np.min(gradX), np.max(gradX));
+  //gradX = (255 * ((gradX - minVal) / (maxVal - minVal)));
+  //gradX = gradX.astype("uint8");
+  gradX.convertTo(gradX, cv.CV_8U);
+
+  canvas = document.createElement('canvas');
+  document.getElementsByTagName('body')[0].append(canvas);
+  cv.imshow(canvas, gradX);
+
+  // Apply a closing operation using the rectangular kernel to help
+  // cloes gaps in between credit card number digits, then apply
+  // Otsu's thresholding method to binarize the image.
+  let thresh = new cv.Mat();
+  cv.morphologyEx(gradX, thresh, cv.MORPH_CLOSE, rectKernel);
+  cv.threshold(thresh, thresh, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+  // Apply a second closing operation to the binary image, again
+  // to help close gaps between credit card number regions.
+  cv.morphologyEx(thresh, thresh, cv.MORPH_CLOSE, sqKernel);
+
+  canvas = document.createElement('canvas');
+  document.getElementsByTagName('body')[0].append(canvas);
+  cv.imshow(canvas, thresh);
+
+  // Find contours in the thresholded image, then initialize the
+  // list of digit locations.
+  let cardContours = new cv.MatVector();
+  cv.findContours(thresh, cardContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  let blocks = [];
+  // Loop over the contours.
+  for (let i = 0; i < cardContours.size(); ++i) {
+    // Compute the bounding box of the contour, then use the
+    // bounding box coordinates to derive the aspect ratio.
+    let rect = cv.boundingRect(cardContours.get(i));
+    let ratio = rect.width / rect.height;
+    // Since credit cards used a fixed size fonts with 4 groups
+    // of 4 digits, we can prune potential contours based on the
+    // aspect ratio.
+    if (ratio > 2.5 && ratio < 4.0) {
+      // Contours can further be pruned on minimum/maximum width
+      // and height
+      if ((rect.width > 40 && rect.width < 55) && (rect.height > 10 && rect.height < 20)) {
+        // append the bounding box region of the digits group
+        // to our locations list
+        blocks.push(rect);
+      }
+    }
+  }
+  blocks.reverse();
+
+  output = [];
+  // Loop over the 4 groupings of 4 digits.
+  //for (i, (gX, gY, gW, gH)) in enumerate(locs) {
+  for (let i = 0; i < blocks.length; ++i) {
+    // Initialize the list of group digits.
+    groupOutput = [];
+
+    // Extract the group ROI of 4 digits from the grayscale image,
+    // then apply thresholding to segment the digits from the
+    // background of the credit card.
+    let group = new cv.Mat();
+    let rect = new cv.Rect(blocks[i].x - 5, blocks[i].y - 5, blocks[i].width + 5, blocks[i].height + 5);
+    //group = grayCard[y - 5:y + h + 5, x - 5:x + w + 5];
+    group = grayCard.roi(rect);
+    cv.threshold(group, group, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+
+    let digitContours = new cv.MatVector();
+    // Detect the contours of each individual digit in the group,
+    // then sort the digit contours from left to right.
+    cv.findContours(group, digitContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    //digitContours = contours.sort_contours(digitContours, method="left-to-right")[0];
+
+    // Loop over the digit contours
+    for (let i = 0; i < digitContours.size(); ++i) {
+      // Compute the bounding box of the individual digit, extract
+      // the digit, and resize it to have the same fixed size as
+      // the reference OCR-A images.
+      let rect = cv.boundingRect(digitContours.get(i));
+      let roi = new cv.Mat();
+      let roiSize = new cv.Size(57, 88);
+      roi = group.roi(rect);
+      cv.resize(roi, roi, roiSize);
+
+      // Initialize a list of template matching scores.
+      scores = [];
+
+      // Loop over the reference digit name and digit ROI.
+      for (let i = 0; i < digits.length; ++i) {
+        // Apply correlation-based template matching, take the
+        // score, and update the scores list.
+        let mask = new cv.Mat();
+        let result = new cv.Mat();
+        cv.matchTemplate(roi, digits[i], result, cv.TM_CCOEFF, mask);
+  //      (_, score, _, _) = cv.minMaxLoc(result, mask);
+  //      scores.append(score);
+        mask.delete(); result.delete();
+      }
+
+      // The classification for the digit ROI will be the reference
+      // Digit name with the *largest* template matching score.
+  //    groupOutput.append(str(np.argmax(scores)));
+      roi.delete();
+    }
+  }
+
+
+  ocrContours.delete(); hierarchy.delete(); dst.delete();
+  rectKernel.delete(); sqKernel.delete();
+  grayCard.delete(); tophat.delete(); gradX.delete(); thresh.delete();
+  cardContours.delete();
+  for (let i = 0; i < digits.length; ++i) {
+    digits[i].delete();
+  }
 
 });
