@@ -47,10 +47,6 @@ utils.loadOpenCv(() => {
   cv.cvtColor(digitsImg, digitsImg, cv.COLOR_BGR2GRAY);
   cv.threshold(digitsImg, digitsImg, 10, 255, cv.THRESH_BINARY_INV);
 
-  let canvas = document.createElement('canvas');
-  document.getElementsByTagName('body')[0].append(canvas);
-  cv.imshow(canvas, digitsImg);
-
   // Find contours in the OCR-A image (i.e,. the outlines of the digits).
   // Sort them from left to right, and initialize a dictionary to map
   // digit name to the ROI.
@@ -64,9 +60,6 @@ utils.loadOpenCv(() => {
       Math.round(Math.random() * 255));
     cv.drawContours(dst, ocrContours, i, color, 1, cv.LINE_8, hierarchy, 100);
   }
-  canvas = document.createElement('canvas');
-  document.getElementsByTagName('body')[0].append(canvas);
-  cv.imshow(canvas, dst);
 
   // Loop over the OCR-A reference contours.
   let digits = [];
@@ -82,6 +75,7 @@ utils.loadOpenCv(() => {
     // Update the digits dictionary, mapping the digit name to the ROI.
     digits[i] = roi;
   }
+  console.log(digits);
   digits.reverse();
 
   // Initialize a rectangular (wider than it is tall) and square
@@ -99,10 +93,6 @@ utils.loadOpenCv(() => {
   let grayCard = new cv.Mat();
   cv.cvtColor(cardImg, grayCard, cv.COLOR_BGR2GRAY);
 
-  canvas = document.createElement('canvas');
-  document.getElementsByTagName('body')[0].append(canvas);
-  cv.imshow(canvas, grayCard);
-
   // Apply a tophat (whitehat) morphological operator to find light
   // regions against a dark background (i.e., the credit card numbers).
   let tophat = new cv.Mat();
@@ -115,7 +105,8 @@ utils.loadOpenCv(() => {
   // Compute the Scharr gradient of the tophat image, then scale
   // the rest back into the range [0, 255].
   let gradX = new cv.Mat();
-  cv.Sobel(tophat, gradX, cv.CV_32F, 1, 0, 3);
+  let kernel = 1;
+  cv.Sobel(tophat, gradX, cv.CV_32F, 1, 0, kernel);
   cv.convertScaleAbs(gradX, gradX, 1, 0);
   // gradX = np.absolute(gradX);
   //(minVal, maxVal) = (np.min(gradX), np.max(gradX));
@@ -153,6 +144,7 @@ utils.loadOpenCv(() => {
     // bounding box coordinates to derive the aspect ratio.
     let rect = cv.boundingRect(cardContours.get(i));
     let ratio = rect.width / rect.height;
+    //console.log('ratio', ratio.toFixed(1), 'w', rect.width, 'h', rect.height, 'x', rect.x, 'y', rect.y);
     // Since credit cards used a fixed size fonts with 4 groups
     // of 4 digits, we can prune potential contours based on the
     // aspect ratio.
@@ -166,11 +158,11 @@ utils.loadOpenCv(() => {
       }
     }
   }
+  console.log(groups);
   groups.reverse();
 
   output = [];
   // Loop over the 4 groupings of 4 digits.
-  //for (i, (gX, gY, gW, gH)) in enumerate(locs) {
   for (let i = 0; i < groups.length; ++i) {
     // Initialize the list of group digits.
     groupOutput = [];
@@ -205,6 +197,10 @@ utils.loadOpenCv(() => {
       roi = group.roi(rect);
       cv.resize(roi, roi, roiSize);
 
+      canvas = document.createElement('canvas');
+      document.getElementsByTagName('body')[0].append(canvas);
+      cv.imshow(canvas, roi);
+
       // Initialize a list of template matching scores.
       scores = [];
 
@@ -216,7 +212,6 @@ utils.loadOpenCv(() => {
         let dstRoi = new cv.Mat();
         cv.matchTemplate(roi, digits[i], dstRoi, cv.TM_CCOEFF, mask);
         let result = cv.minMaxLoc(dstRoi, mask);
-        //console.log(result);
         let score = result.maxVal;
         scores.push(score);
         mask.delete(); dstRoi.delete();
@@ -227,6 +222,7 @@ utils.loadOpenCv(() => {
       groupOutput.push(scores.indexOf(Math.max(...scores)));
       roi.delete();
     }
+    console.log(groupOutput);
     groupOutput.reverse();
 
     cv.rectangle(cardImg, new cv.Point(groups[i].x - 5, groups[i].y - 5),
@@ -236,12 +232,18 @@ utils.loadOpenCv(() => {
     output.push(groupOutput.join(''));
   }
 
-  document.getElementById('cardType').innerText = FIRST_NUMBER[output[0][0]];
-  document.getElementById('cardNumber').innerText = output.join(' ');
-
   canvas = document.createElement('canvas');
   document.getElementsByTagName('body')[0].append(canvas);
   cv.imshow(canvas, cardImg);
+
+  if (output[0]) {
+    let text = document.createElement('p');
+    text.innerText = FIRST_NUMBER[output[0][0]];
+    document.getElementsByTagName('body')[0].append(text);
+    text = document.createElement('p');
+    text.innerText = output.join(' ');
+    document.getElementsByTagName('body')[0].append(text);
+  }
 
 
   ocrContours.delete(); hierarchy.delete(); dst.delete();
