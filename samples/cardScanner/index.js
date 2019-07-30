@@ -1,5 +1,15 @@
 let utils = new Utils('errorMessage');
 
+// Define a dictionary that maps the first digit of a credit card
+// Number to the credit card type.
+FIRST_NUMBER = {
+  "3": "American Express",
+  "4": "Visa",
+  "5": "MasterCard",
+  "6": "Discover Card"
+}
+const color = [255, 0, 0, 255];
+
 function resize(image, width = 'undefined', height = 'undefined', inter = cv.INTER_AREA) {
   // Initialize the dimensions of the image to be resized and
   // grab the image size.
@@ -136,7 +146,7 @@ utils.loadOpenCv(() => {
   let cardContours = new cv.MatVector();
   cv.findContours(thresh, cardContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-  let blocks = [];
+  let groups = [];
   // Loop over the contours.
   for (let i = 0; i < cardContours.size(); ++i) {
     // Compute the bounding box of the contour, then use the
@@ -152,16 +162,16 @@ utils.loadOpenCv(() => {
       if ((rect.width > 40 && rect.width < 55) && (rect.height > 10 && rect.height < 20)) {
         // append the bounding box region of the digits group
         // to our locations list
-        blocks.push(rect);
+        groups.push(rect);
       }
     }
   }
-  blocks.reverse();
+  groups.reverse();
 
   output = [];
   // Loop over the 4 groupings of 4 digits.
   //for (i, (gX, gY, gW, gH)) in enumerate(locs) {
-  for (let i = 0; i < blocks.length; ++i) {
+  for (let i = 0; i < groups.length; ++i) {
     // Initialize the list of group digits.
     groupOutput = [];
 
@@ -169,10 +179,14 @@ utils.loadOpenCv(() => {
     // then apply thresholding to segment the digits from the
     // background of the credit card.
     let group = new cv.Mat();
-    let rect = new cv.Rect(blocks[i].x - 5, blocks[i].y - 5, blocks[i].width + 5, blocks[i].height + 5);
+    let rect = new cv.Rect(groups[i].x - 5, groups[i].y - 5, groups[i].width + 5, groups[i].height + 5);
     //group = grayCard[y - 5:y + h + 5, x - 5:x + w + 5];
     group = grayCard.roi(rect);
     cv.threshold(group, group, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+
+    canvas = document.createElement('canvas');
+    document.getElementsByTagName('body')[0].append(canvas);
+    cv.imshow(canvas, group);
 
     let digitContours = new cv.MatVector();
     // Detect the contours of each individual digit in the group,
@@ -199,19 +213,35 @@ utils.loadOpenCv(() => {
         // Apply correlation-based template matching, take the
         // score, and update the scores list.
         let mask = new cv.Mat();
-        let result = new cv.Mat();
-        cv.matchTemplate(roi, digits[i], result, cv.TM_CCOEFF, mask);
-  //      (_, score, _, _) = cv.minMaxLoc(result, mask);
-  //      scores.append(score);
-        mask.delete(); result.delete();
+        let dstRoi = new cv.Mat();
+        cv.matchTemplate(roi, digits[i], dstRoi, cv.TM_CCOEFF, mask);
+        let result = cv.minMaxLoc(dstRoi, mask);
+        //console.log(result);
+        let score = result.maxVal;
+        scores.push(score);
+        mask.delete(); dstRoi.delete();
       }
 
       // The classification for the digit ROI will be the reference
       // Digit name with the *largest* template matching score.
-  //    groupOutput.append(str(np.argmax(scores)));
+      groupOutput.push(scores.indexOf(Math.max(...scores)));
       roi.delete();
     }
+    groupOutput.reverse();
+
+    cv.rectangle(cardImg, new cv.Point(groups[i].x - 5, groups[i].y - 5),
+      new cv.Point(groups[i].x + groups[i].width + 5,
+        groups[i].y + groups[i].height + 5), color, 2);
+    // Update the output digits list.
+    output.push(groupOutput.join(''));
   }
+
+  document.getElementById('cardType').innerText = FIRST_NUMBER[output[0][0]];
+  document.getElementById('cardNumber').innerText = output.join(' ');
+
+  canvas = document.createElement('canvas');
+  document.getElementsByTagName('body')[0].append(canvas);
+  cv.imshow(canvas, cardImg);
 
 
   ocrContours.delete(); hierarchy.delete(); dst.delete();
