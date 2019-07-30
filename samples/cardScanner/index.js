@@ -38,45 +38,50 @@ function resize(image, width = 'undefined', height = 'undefined', inter = cv.INT
   cv.resize(image, image, dim, interpolation = inter);
 }
 
+function compareRect(a, b){
+  if (a.x > b.x) return 1;
+  if (b.x > a.x) return -1;
+  return 0;
+}
+
+function getSortedRectangles(contours) {
+  let rectangles = [];
+  for (let i = 0; i < contours.size(); ++i) {
+    rectangles.push(cv.boundingRect(contours.get(i)));
+  }
+  return rectangles.sort(compareRect);
+}
+
 utils.loadOpenCv(() => {
   // Load the reference OCR-A image from disk, convert it to grayscale,
   // and threshold it, such that the digits appear as *white* on a
   // *black* background and invert it, such that the digits appear
   // as *white* on a *black*.
-  let digitsImg = cv.imread('ocrDigitsImage');
+  let digitsImg = cv.imread('ocrFont');
   cv.cvtColor(digitsImg, digitsImg, cv.COLOR_BGR2GRAY);
   cv.threshold(digitsImg, digitsImg, 10, 255, cv.THRESH_BINARY_INV);
 
   // Find contours in the OCR-A image (i.e,. the outlines of the digits).
   // Sort them from left to right, and initialize a dictionary to map
   // digit name to the ROI.
-  let ocrContours = new cv.MatVector();
+  let fontContours = new cv.MatVector();
   let hierarchy = new cv.Mat();
   let dst = cv.Mat.zeros(digitsImg.rows, digitsImg.cols, cv.CV_8UC3);
-  cv.findContours(digitsImg, ocrContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-  for (let i = 0; i < ocrContours.size(); ++i) {
-    let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
-      Math.round(Math.random() * 255));
-    cv.drawContours(dst, ocrContours, i, color, 1, cv.LINE_8, hierarchy, 100);
-  }
+  cv.findContours(digitsImg, fontContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  let fontRectangles = getSortedRectangles(fontContours);
 
   // Loop over the OCR-A reference contours.
   let digits = [];
-
-  for (let i = 0; i < ocrContours.size(); ++i) {
+  for (let i = 0; i < fontRectangles.length; ++i) {
     // Compute the bounding box for the digit, extract it, and resize
     // it to a fixed size.
-    let rect = cv.boundingRect(ocrContours.get(i));
     let roi = new cv.Mat();
     let roiSize = new cv.Size(57, 88);
-    roi = digitsImg.roi(rect);
+    roi = digitsImg.roi(fontRectangles[i]);
     cv.resize(roi, roi, roiSize);
     // Update the digits dictionary, mapping the digit name to the ROI.
     digits[i] = roi;
   }
-  console.log(digits);
-  digits.reverse();
 
   // Initialize a rectangular (wider than it is tall) and square
   // structuring kernel.
@@ -134,17 +139,17 @@ utils.loadOpenCv(() => {
 
   // Find contours in the thresholded image, then initialize the
   // list of digit locations.
-  let cardContours = new cv.MatVector();
-  cv.findContours(thresh, cardContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  let groupsContours = new cv.MatVector();
+  cv.findContours(thresh, groupsContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  let groupsRectangles = getSortedRectangles(groupsContours);
 
   let groups = [];
   // Loop over the contours.
-  for (let i = 0; i < cardContours.size(); ++i) {
+  for (let i = 0; i < groupsRectangles.length; ++i) {
     // Compute the bounding box of the contour, then use the
     // bounding box coordinates to derive the aspect ratio.
-    let rect = cv.boundingRect(cardContours.get(i));
+    let rect = groupsRectangles[i];
     let ratio = rect.width / rect.height;
-    //console.log('ratio', ratio.toFixed(1), 'w', rect.width, 'h', rect.height, 'x', rect.x, 'y', rect.y);
     // Since credit cards used a fixed size fonts with 4 groups
     // of 4 digits, we can prune potential contours based on the
     // aspect ratio.
@@ -158,8 +163,6 @@ utils.loadOpenCv(() => {
       }
     }
   }
-  console.log(groups);
-  groups.reverse();
 
   output = [];
   // Loop over the 4 groupings of 4 digits.
@@ -171,7 +174,7 @@ utils.loadOpenCv(() => {
     // then apply thresholding to segment the digits from the
     // background of the credit card.
     let group = new cv.Mat();
-    let rect = new cv.Rect(groups[i].x - 5, groups[i].y - 5, groups[i].width + 5, groups[i].height + 5);
+    let rect = new cv.Rect(groups[i].x - 2, groups[i].y - 2, groups[i].width + 4, groups[i].height + 4);
     //group = grayCard[y - 5:y + h + 5, x - 5:x + w + 5];
     group = grayCard.roi(rect);
     cv.threshold(group, group, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
@@ -180,21 +183,20 @@ utils.loadOpenCv(() => {
     document.getElementsByTagName('body')[0].append(canvas);
     cv.imshow(canvas, group);
 
-    let digitContours = new cv.MatVector();
+    let digitsContours = new cv.MatVector();
     // Detect the contours of each individual digit in the group,
     // then sort the digit contours from left to right.
-    cv.findContours(group, digitContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-    //digitContours = contours.sort_contours(digitContours, method="left-to-right")[0];
+    cv.findContours(group, digitsContours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    let digitsRectangles = getSortedRectangles(digitsContours);
 
     // Loop over the digit contours
-    for (let i = 0; i < digitContours.size(); ++i) {
+    for (let i = 0; i < digitsRectangles.length; ++i) {
       // Compute the bounding box of the individual digit, extract
       // the digit, and resize it to have the same fixed size as
       // the reference OCR-A images.
-      let rect = cv.boundingRect(digitContours.get(i));
       let roi = new cv.Mat();
       let roiSize = new cv.Size(57, 88);
-      roi = group.roi(rect);
+      roi = group.roi(digitsRectangles[i]);
       cv.resize(roi, roi, roiSize);
 
       canvas = document.createElement('canvas');
@@ -222,14 +224,14 @@ utils.loadOpenCv(() => {
       groupOutput.push(scores.indexOf(Math.max(...scores)));
       roi.delete();
     }
-    console.log(groupOutput);
-    groupOutput.reverse();
 
     cv.rectangle(cardImg, new cv.Point(groups[i].x - 5, groups[i].y - 5),
       new cv.Point(groups[i].x + groups[i].width + 5,
         groups[i].y + groups[i].height + 5), color, 2);
     // Update the output digits list.
     output.push(groupOutput.join(''));
+
+    digitsContours.delete();
   }
 
   canvas = document.createElement('canvas');
@@ -246,10 +248,10 @@ utils.loadOpenCv(() => {
   }
 
 
-  ocrContours.delete(); hierarchy.delete(); dst.delete();
+  fontContours.delete(); hierarchy.delete(); dst.delete();
   rectKernel.delete(); sqKernel.delete();
   grayCard.delete(); tophat.delete(); gradX.delete(); thresh.delete();
-  cardContours.delete();
+  groupsContours.delete();
   for (let i = 0; i < digits.length; ++i) {
     digits[i].delete();
   }
