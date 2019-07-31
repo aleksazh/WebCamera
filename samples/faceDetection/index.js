@@ -10,7 +10,6 @@ let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 
 let videoCapturer = null;
-let image = null;
 let src = null;
 let gray = null;
 let faces = null;
@@ -92,7 +91,6 @@ function processVideo() {
       }
       faceGray.delete(); faceSrc.delete();
     }
-    image = src;
     cv.imshow('canvasOutput', src);
 
     stats.end();

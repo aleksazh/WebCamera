@@ -1,4 +1,4 @@
-const color = [255, 0, 0, 255]; // Red
+const cardAspectRatio = 1.586;
 
 CARD_TYPE = {
   "3": "American Express",
@@ -235,8 +235,9 @@ function startCardProcessing() {
     output.push(groupOutput.join('')); // Update the output digits list.
 
     // let rect = groupRectangles[i];
+    // const redColor = [255, 0, 0, 255];
     // cv.rectangle(grayCard, new cv.Point(rect.x - 5, rect.y - 5),
-    //   new cv.Point(rect.x + rect.width + 5, rect.y + rect.height + 5), color, 2);
+    //   new cv.Point(rect.x + rect.width + 5, rect.y + rect.height + 5), redColor, 2);
   }
   outputToCanvas(grayCard);
 
