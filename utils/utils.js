@@ -205,8 +205,6 @@ function getVideoConstraint() {
 function setMainCanvasProperties(video) {
   video.width = video.videoWidth;
   video.height = video.videoHeight;
-  //canvasOutput.style.width = `${video.width}px`;
-  //canvasOutput.style.height = `${video.height}px`;
   document.getElementById('mainContent').style.width = `${video.width}px`;
   document.querySelector('.canvas-wrapper').style.height =
     `${video.height}px`;

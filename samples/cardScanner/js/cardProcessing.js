@@ -1,5 +1,3 @@
-let utils = new Utils('errorMessage');
-
 const color = [255, 0, 0, 255]; // Red
 
 CARD_TYPE = {
@@ -248,7 +246,3 @@ function startCardProcessing() {
 
   deleteMatObjects(refDigits, grayCard, filteredCard);
 }
-
-utils.loadOpenCv(() => {
-  startCardProcessing();
-});
