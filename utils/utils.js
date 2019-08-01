@@ -210,11 +210,19 @@ function setMainCanvasProperties(video) {
     `${video.height}px`;
 }
 
+function setPhotoSettings() {
+  photoSettings = {
+    imageWidth: video.width,
+    imageHeight: video.height
+  };
+  return photoSettings;
+}
+
 function onVideoStarted() {
   streaming = true;
+  setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
   imageCapturer = new ImageCapture(videoTrack);
-  setMainCanvasProperties(video);
   document.getElementById('mainContent').classList.remove('hidden');
   completeStyling();
   initOpencvObjects();

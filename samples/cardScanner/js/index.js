@@ -4,19 +4,34 @@ let videoConstraint;
 let streaming = false;
 let videoTrack = null;
 let imageCapturer = null;
+let photoSettings = null;
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 let videoCapturer = null;
 let src = null;
 
-let rectWidth = 50;
-let rectHeight = 25;
+// We draw rectangle for card on video stream.
+let rectPointUpperLeft;
+let rectPointBottomRight;
 const rectColor = [0, 255, 0, 255]; // Green
 
+
+function calculateRectCoordinates() {
+  const rectRatio = 1.586;
+  let xLeft = parseInt(video.width * 0.1);
+  let xRight = parseInt(video.width * 0.9);
+  let width = xRight - xLeft;
+  let height = width / rectRatio;
+  let yUpper = parseInt(video.height / 2 - height / 2);
+  let yBottom = parseInt(yUpper + height);
+  rectPointUpperLeft = new cv.Point(xLeft, yUpper);
+  rectPointBottomRight = new cv.Point(xRight, yBottom);
+}
 
 function initOpencvObjects() {
   videoCapturer = new cv.VideoCapture(video);
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+  calculateRectCoordinates();
 }
 
 function completeStyling() {
@@ -32,6 +47,9 @@ function completeStyling() {
 
   document.getElementById('takePhotoButton').disabled = false;
   document.getElementById('facingModeButton').disabled = true;
+
+  // Use the same size of the photo as the video source.
+  photoSettings = setPhotoSettings();
 }
 
 function processVideo() {
@@ -41,9 +59,7 @@ function processVideo() {
       return;
     }
     videoCapturer.read(src);
-    let pointUpperLeft = new cv.Point(50, 50);
-    let pointBottomRight = new cv.Point(50 + rectWidth, 50 + rectHeight);
-    cv.rectangle(src, pointUpperLeft, pointBottomRight, rectColor, 3);
+    cv.rectangle(src, rectPointUpperLeft, rectPointBottomRight, rectColor, 3);
     cv.imshow('canvasOutput', src);
     requestAnimationFrame(processVideo);
   } catch (err) {
@@ -57,12 +73,14 @@ function initUI() {
   // TakePhoto event by clicking takePhotoButton.
   let takePhotoButton = document.getElementById('takePhotoButton');
   takePhotoButton.addEventListener('click', function () {
-    imageCapturer.takePhoto()
+    imageCapturer.takePhoto(photoSettings)
       .then(blob => createImageBitmap(blob))
       .then(imageBitmap => {
+        // Draw photo to small gallery canvas.
         const canvas = document.getElementById('gallery');
         drawCanvas(canvas, imageBitmap);
-        startCardProcessing();
+        // Extract card photo and process it.
+        startCardProcessing(imageBitmap);
       })
       .catch((err) => console.error("takePhoto() failed: ", err));
   });
