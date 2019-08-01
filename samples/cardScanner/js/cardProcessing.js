@@ -1,5 +1,3 @@
-const cardAspectRatio = 1.586;
-
 CARD_TYPE = {
   "3": "American Express",
   "4": "Visa",
@@ -65,16 +63,27 @@ function getReferenceDigits(imgId, refSize) {
     digit = src.roi(rectangles[i]);
     cv.resize(digit, digit, refSize);
     digits[i] = digit;
+     outputToCanvas(digit);
   }
   src.delete();
   return digits;
 }
 
-function loadCardImg(cardImgId, grayCard) {
-  // Load the input image, resize it, and convert it to grayscale.
-  let cardImg = cv.imread(cardImgId);
+function loadCardImg(src, grayCard) {
+  // Extract card area from source image.
+  //let cardImg = new cv.Mat();
+  let rect = new cv.Rect(rectPointUpperLeft.x, rectPointUpperLeft.y,
+    rectPointBottomRight.x - rectPointUpperLeft.x,
+    rectPointBottomRight.y - rectPointUpperLeft.y);
+  //cardImg = src.roi(rect);
+
+  let cardImg = cv.imread('test');
+
+  // Resize card and convert it to grayscale.
   resize(cardImg, width = 300);
+  outputToCanvas(cardImg);
   cv.cvtColor(cardImg, grayCard, cv.COLOR_BGR2GRAY);
+  outputToCanvas(grayCard);
   cardImg.delete();
 }
 
@@ -90,7 +99,7 @@ function applyFiltersToCard(grayCard, filteredCard) {
   // regions against a dark background (i.e., the credit card numbers).
   let tophat = new cv.Mat();
   cv.morphologyEx(grayCard, tophat, cv.MORPH_TOPHAT, rectKernel)
-  // outputToCanvas(tophat);
+    outputToCanvas(tophat);
 
   // Compute the Sobel gradient of the tophat image.
   // Set the order of the derivative in x direction.
@@ -102,7 +111,7 @@ function applyFiltersToCard(grayCard, filteredCard) {
   // https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_gradients/py_gradients.html#one-important-matter
   cv.convertScaleAbs(gradX, gradX, 1, 0);
   gradX.convertTo(gradX, cv.CV_8U);
-  // outputToCanvas(gradX);
+    outputToCanvas(gradX);
 
   // Apply a closing operation using the rectangular kernel to help
   // close gaps between credit card number regions.
@@ -115,7 +124,7 @@ function applyFiltersToCard(grayCard, filteredCard) {
   // Apply a second closing operation to the binary image, again
   // to help close gaps between credit card number regions.
   cv.morphologyEx(thresh, filteredCard, cv.MORPH_CLOSE, squareKernel);
-  // outputToCanvas(filteredCard);
+   outputToCanvas(filteredCard);
 
   rectKernel.delete(); squareKernel.delete();
   tophat.delete(); gradX.delete(); thresh.delete();
@@ -152,7 +161,7 @@ function detectDigit(group, digitRect, refDigits, refSize) {
   cardDigit = group.roi(digitRect);
   // Resize digit to have the same fixed size as the reference digits.
   cv.resize(cardDigit, cardDigit, refSize);
-  // outputToCanvas(cardDigit);
+   outputToCanvas(cardDigit);
 
   scores = []; // Initialize a list of template matching scores.
   let cardDigitDst = new cv.Mat();
@@ -162,8 +171,11 @@ function detectDigit(group, digitRect, refDigits, refSize) {
     // Apply correlation-based template matching and take the score.
     cv.matchTemplate(cardDigit, refDigits[i], cardDigitDst, cv.TM_CCOEFF, mask);
     let score = cv.minMaxLoc(cardDigitDst, mask).maxVal;
+    console.log(score);
     scores.push(score);
   }
+  console.log('result', scores.indexOf(Math.max(...scores)));
+  console.log('nextDigit');
   cardDigit.delete(); cardDigitDst.delete(); mask.delete();
   // Take the *largest* template matching score.
   return scores.indexOf(Math.max(...scores));
@@ -174,10 +186,12 @@ function detectDigitsInGroup(groupRect, grayCard, refDigits, refSize) {
   // thresholding to segment the digits from the background of the credit card.
   let groupSrc = new cv.Mat();
   // TODO(sasha): Try without newRect.
-  let newRect = new cv.Rect(groupRect.x - 2, groupRect.y - 2, groupRect.width + 4, groupRect.height + 4);
-  groupSrc = grayCard.roi(newRect);
+  //let newRect = new cv.Rect(groupRect.x - 2, groupRect.y - 2, groupRect.width + 4, groupRect.height + 4);
+  //groupSrc = grayCard.roi(newRect);
+  groupSrc = grayCard.roi(groupRect);
   cv.threshold(groupSrc, groupSrc, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
-  //outputToCanvas(groupSrc);
+  
+   outputToCanvas(groupSrc);
 
   // Detect the contours of each individual digit in the group,
   // then sort the digit contours from left to right.
@@ -200,12 +214,8 @@ function detectDigitsInGroup(groupRect, grayCard, refDigits, refSize) {
 }
 
 function showOutput(output) {
-  let text = document.createElement('p');
-  text.innerText = CARD_TYPE[output[0][0]];
-  document.getElementsByTagName('body')[0].append(text);
-  text = document.createElement('p');
-  text.innerText = output.join(' ');
-  document.getElementsByTagName('body')[0].append(text);
+  document.getElementById('cardType').innerText = CARD_TYPE[output[0][0]];
+  document.getElementById('cardNumber').innerText = output.join(' ');
 }
 
 function deleteMatObjects(refDigits, grayCard, filteredCard) {
@@ -215,12 +225,12 @@ function deleteMatObjects(refDigits, grayCard, filteredCard) {
   grayCard.delete(); filteredCard.delete();
 }
 
-function startCardProcessing() {
+function startCardProcessing(src) {
   let refSize = new cv.Size(57, 88);
   let refDigits = getReferenceDigits('ocrFont', refSize);
 
   let grayCard = new cv.Mat();
-  loadCardImg('cardImage', grayCard);
+  loadCardImg(src, grayCard);
 
   let filteredCard = new cv.Mat();
   applyFiltersToCard(grayCard, filteredCard);
@@ -239,10 +249,14 @@ function startCardProcessing() {
     // cv.rectangle(grayCard, new cv.Point(rect.x - 5, rect.y - 5),
     //   new cv.Point(rect.x + rect.width + 5, rect.y + rect.height + 5), redColor, 2);
   }
-  outputToCanvas(grayCard);
+  // outputToCanvas(grayCard);
+  cv.imshow('outputImage', grayCard);
 
   if (output[0]) {
     showOutput(output);
+  } else {
+    document.getElementById('cardNumber').innerText =
+      'Please take a more accurate photo.';
   }
 
   deleteMatObjects(refDigits, grayCard, filteredCard);

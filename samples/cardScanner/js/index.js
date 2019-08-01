@@ -1,4 +1,5 @@
 let utils = new Utils('errorMessage');
+let stats = null;
 let controls = {};
 let videoConstraint;
 let streaming = false;
@@ -9,14 +10,29 @@ let canvasOutput = document.getElementById('canvasOutput');
 let videoCapturer = null;
 let src = null;
 
-let rectWidth = 50;
-let rectHeight = 25;
+// We draw rectangle for card on video stream.
+let rectPointUpperLeft;
+let rectPointBottomRight;
 const rectColor = [0, 255, 0, 255]; // Green
 
+
+function calculateRectCoordinates() {
+  const rectRatio = 1.586;
+  let xLeft = parseInt(video.width * 0.1);
+  let xRight = parseInt(video.width * 0.9);
+  let width = xRight - xLeft;
+  let height = width / rectRatio;
+  let yUpper = parseInt(video.height / 2 - height / 2);
+  let yBottom = parseInt(yUpper + height);
+  rectPointUpperLeft = new cv.Point(xLeft, yUpper);
+  rectPointBottomRight = new cv.Point(xRight, yBottom);
+}
 
 function initOpencvObjects() {
   videoCapturer = new cv.VideoCapture(video);
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+  calculateRectCoordinates();
+  startCardProcessing(src);
 }
 
 function completeStyling() {
@@ -40,11 +56,12 @@ function processVideo() {
       src.delete();
       return;
     }
+    stats.begin();
     videoCapturer.read(src);
-    let pointUpperLeft = new cv.Point(50, 50);
-    let pointBottomRight = new cv.Point(50 + rectWidth, 50 + rectHeight);
-    cv.rectangle(src, pointUpperLeft, pointBottomRight, rectColor, 3);
+    //startCardProcessing(src);
+    cv.rectangle(src, rectPointUpperLeft, rectPointBottomRight, rectColor, 3);
     cv.imshow('canvasOutput', src);
+    stats.end();
     requestAnimationFrame(processVideo);
   } catch (err) {
     utils.printError(err);
@@ -53,18 +70,12 @@ function processVideo() {
 
 function initUI() {
   getVideoConstraint();
+  initStats();
 
   // TakePhoto event by clicking takePhotoButton.
   let takePhotoButton = document.getElementById('takePhotoButton');
   takePhotoButton.addEventListener('click', function () {
-    imageCapturer.takePhoto()
-      .then(blob => createImageBitmap(blob))
-      .then(imageBitmap => {
-        const canvas = document.getElementById('gallery');
-        drawCanvas(canvas, imageBitmap);
-        startCardProcessing();
-      })
-      .catch((err) => console.error("takePhoto() failed: ", err));
+    takePhoto();
   });
 
   controls = {

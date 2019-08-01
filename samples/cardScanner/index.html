@@ -19,23 +19,22 @@
 
     <div class="camera-bar-wrapper">
       <ul id="camera-bar">
-        <ul id="camera-bar">
-          <li>
-            <div class="gallery-wrapper">
-              <canvas id="gallery" class="camera-bar-icon"></canvas>
-            </div>
-          </li>
-          <li>
-            <div class="take-photo-wrapper">
-              <button id="takePhotoButton" class="camera-bar-icon material-icons" disabled>photo_camera</button>
-            </div>
-          </li>
-          <li>
-            <div class="face-mode-wrapper">
-              <button id="facingModeButton" class="camera-bar-icon material-icons" disabled>camera_rear</button>
-            </div>
-          </li>
-        </ul>
+        <li>
+          <div class="gallery-wrapper">
+            <canvas id="gallery" class="camera-bar-icon"></canvas>
+          </div>
+        </li>
+        <li>
+          <div class="take-photo-wrapper">
+            <button id="takePhotoButton" class="camera-bar-icon material-icons" disabled>photo_camera</button>
+          </div>
+        </li>
+        <li>
+          <div class="face-mode-wrapper">
+            <button id="facingModeButton" class="camera-bar-icon material-icons" disabled>camera_rear</button>
+          </div>
+        </li>
+      </ul>
     </div>
 
     <div class="stats-settings centered">
@@ -44,15 +43,22 @@
     </div>
   </div>
 
+  <div class="stats-settings centered">
+    <label id="hideStatsLabel" class="hidden" for="hideStats">Hide statistics</label>
+    <input id="hideStats" class="hidden" type="checkbox" checked>
+  </div>
+
   <video id="videoInput" class="hidden"></video>
   <p class="err centered" id="errorMessage"></p>
-
-  <img id="cardImage" src="resources/card_1.png" class="hidden"></img>
   <img id="ocrFont" src="resources/ocr_digits.png" class="hidden"></img>
+  <img id="test" src="resources/card_1.png" class="hidden"></img>
+  <canvas id="outputImage"></canvas>
   <p id=cardType></p>
   <p id=cardNumber></p>
 
+  <script src="../../libs/stats.min.js" type="text/javascript"></script>
   <script src="../../utils/utils.js" type="text/javascript"></script>
+  <script src="../../utils/statsInit.js" type="text/javascript"></script>
   <script src="js/cardProcessing.js" type="text/javascript"></script>
   <script src="js/index.js" type="text/javascript"></script>
 </body>

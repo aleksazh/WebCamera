@@ -212,9 +212,9 @@ function setMainCanvasProperties(video) {
 
 function onVideoStarted() {
   streaming = true;
+  setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
   imageCapturer = new ImageCapture(videoTrack);
-  setMainCanvasProperties(video);
   document.getElementById('mainContent').classList.remove('hidden');
   completeStyling();
   initOpencvObjects();
