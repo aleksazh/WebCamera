@@ -43,8 +43,11 @@
     </div>
   </div>
 
-  <canvas id="photo" class=""></canvas>
-  <canvas id="photo2" class=""></canvas>
+  <div class="stats-settings centered">
+    <label id="hideStatsLabel" class="hidden" for="hideStats">Hide statistics</label>
+    <input id="hideStats" class="hidden" type="checkbox" checked>
+  </div>
+
   <video id="videoInput" class="hidden"></video>
   <p class="err centered" id="errorMessage"></p>
   <img id="ocrFont" src="resources/ocr_digits.png" class="hidden"></img>
@@ -52,7 +55,9 @@
   <p id=cardType></p>
   <p id=cardNumber></p>
 
+  <script src="../../libs/stats.min.js" type="text/javascript"></script>
   <script src="../../utils/utils.js" type="text/javascript"></script>
+  <script src="../../utils/statsInit.js" type="text/javascript"></script>
   <script src="js/cardProcessing.js" type="text/javascript"></script>
   <script src="js/index.js" type="text/javascript"></script>
 </body>

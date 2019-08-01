@@ -210,14 +210,6 @@ function setMainCanvasProperties(video) {
     `${video.height}px`;
 }
 
-function setPhotoSettings() {
-  photoSettings = {
-    imageWidth: video.width,
-    imageHeight: video.height
-  };
-  return photoSettings;
-}
-
 function onVideoStarted() {
   streaming = true;
   setMainCanvasProperties(video);

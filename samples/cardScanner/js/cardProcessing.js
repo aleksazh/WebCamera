@@ -69,26 +69,18 @@ function getReferenceDigits(imgId, refSize) {
   return digits;
 }
 
-function loadCardImg(imageBitmap, grayCard) {
-  // Save imageBitmap to hidden canvas.
-  let canvas = document.getElementById('photo');
-  canvas.style.width = `${imageBitmap.width}px`;
-  canvas.style.height = `${imageBitmap.height}px`;
-  drawCanvas(canvas, imageBitmap);
-  cv.imshow('photo2', src);
-
-  // Load the image and extract card area.
-  let img = cv.imread('photo');
+function loadCardImg(src, grayCard) {
+  // Extract card area from source image.
   let cardImg = new cv.Mat();
   let rect = new cv.Rect(rectPointUpperLeft.x, rectPointUpperLeft.y,
     rectPointBottomRight.x - rectPointUpperLeft.x,
     rectPointBottomRight.y - rectPointUpperLeft.y);
-  cardImg = img.roi(rect);
+  cardImg = src.roi(rect);
 
   // Resize card and convert it to grayscale.
   resize(cardImg, width = 300);
   cv.cvtColor(cardImg, grayCard, cv.COLOR_BGR2GRAY);
-  img.delete(); cardImg.delete();
+  cardImg.delete();
 }
 
 function applyFiltersToCard(grayCard, filteredCard) {
@@ -175,8 +167,10 @@ function detectDigit(group, digitRect, refDigits, refSize) {
     // Apply correlation-based template matching and take the score.
     cv.matchTemplate(cardDigit, refDigits[i], cardDigitDst, cv.TM_CCOEFF, mask);
     let score = cv.minMaxLoc(cardDigitDst, mask).maxVal;
+    console.log(score);
     scores.push(score);
   }
+  console.log('nextDigit');
   cardDigit.delete(); cardDigitDst.delete(); mask.delete();
   // Take the *largest* template matching score.
   return scores.indexOf(Math.max(...scores));
@@ -225,12 +219,12 @@ function deleteMatObjects(refDigits, grayCard, filteredCard) {
   grayCard.delete(); filteredCard.delete();
 }
 
-function startCardProcessing(imageBitmap) {
+function startCardProcessing(src) {
   let refSize = new cv.Size(57, 88);
   let refDigits = getReferenceDigits('ocrFont', refSize);
 
   let grayCard = new cv.Mat();
-  loadCardImg(imageBitmap, grayCard);
+  loadCardImg(src, grayCard);
 
   let filteredCard = new cv.Mat();
   applyFiltersToCard(grayCard, filteredCard);
