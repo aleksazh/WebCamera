@@ -69,7 +69,7 @@ function getReferenceDigits(imgId, refSize) {
   return digits;
 }
 
-function loadCardImg(src, grayCard) {
+function loadCardImg(src, grayCard, rectPointUpperLeft, rectPointBottomRight) {
   // Extract card area from source image.
   let cardImg = new cv.Mat();
   let rect = new cv.Rect(rectPointUpperLeft.x, rectPointUpperLeft.y,
@@ -219,12 +219,12 @@ function deleteMatObjects(refDigits, grayCard, filteredCard) {
   grayCard.delete(); filteredCard.delete();
 }
 
-function startCardProcessing(src) {
+function startCardProcessing(src, rectPointUpperLeft, rectPointBottomRight) {
   let refSize = new cv.Size(57, 88);
   let refDigits = getReferenceDigits('ocrFont', refSize);
 
   let grayCard = new cv.Mat();
-  loadCardImg(src, grayCard);
+  loadCardImg(src, grayCard, rectPointUpperLeft, rectPointBottomRight);
 
   let filteredCard = new cv.Mat();
   applyFiltersToCard(grayCard, filteredCard);

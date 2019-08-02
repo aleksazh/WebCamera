@@ -20,18 +20,13 @@
     <div class="camera-bar-wrapper">
       <ul id="camera-bar">
         <li>
-          <div class="gallery-wrapper">
-            <canvas id="gallery" class="camera-bar-icon"></canvas>
+          <div class="take-photo-wrapper">
+            <button id="refreshButton" class="camera-bar-icon material-icons" disabled>refresh</button>
           </div>
         </li>
         <li>
           <div class="take-photo-wrapper">
-            <button id="takePhotoButton" class="camera-bar-icon material-icons" disabled>photo_camera</button>
-          </div>
-        </li>
-        <li>
-          <div class="face-mode-wrapper">
-            <button id="facingModeButton" class="camera-bar-icon material-icons" disabled>camera_rear</button>
+            <button id="doneButton" class="camera-bar-icon material-icons" disabled>done</button>
           </div>
         </li>
       </ul>
@@ -41,17 +36,20 @@
       <label id="hideStatsLabel" class="hidden" for="hideStats">Hide statistics</label>
       <input id="hideStats" class="hidden" type="checkbox" checked>
     </div>
-  </div>
 
-  <div class="stats-settings centered">
-    <label id="hideStatsLabel" class="hidden" for="hideStats">Hide statistics</label>
-    <input id="hideStats" class="hidden" type="checkbox" checked>
+    <label for="cannyThreshold1">Threshold1:
+      <output id="cannyThreshold1Output"></output>
+      <input type="range" id="cannyThreshold1" value="150" min="1" max="500" step="1"></label>
+    <label for="cannyThreshold2">Threshold2:
+      <output id="cannyThreshold2Output"></output>
+      <input type="range" id="cannyThreshold2" value="300" min="1" max="500" step="1"></label>
   </div>
 
   <video id="videoInput" class="hidden"></video>
   <p class="err centered" id="errorMessage"></p>
   <img id="ocrFont" src="resources/ocr_digits.png" class="hidden"></img>
   <canvas id="outputImage"></canvas>
+  <canvas id="outputImage2"></canvas>
   <p id=cardType></p>
   <p id=cardNumber></p>
 

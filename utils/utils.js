@@ -251,11 +251,13 @@ function initCameraSettingsAndStart() {
       });
       // Disable facingModeButton if there is no environment or user mode.
       let facingModeButton = document.getElementById('facingModeButton');
-      if (controls.frontCamera == null || controls.backCamera == null) {
-        facingModeButton.style.color = 'gray';
-        facingModeButton.style.border = '2px solid gray';
-      } else {
-        facingModeButton.disabled = false;
+      if (facingModeButton) {
+        if (controls.frontCamera == null || controls.backCamera == null) {
+          facingModeButton.style.color = 'gray';
+          facingModeButton.style.border = '2px solid gray';
+        } else {
+          facingModeButton.disabled = false;
+        }
       }
 
       // Set initial facingMode value if camera is available.
