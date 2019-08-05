@@ -95,7 +95,7 @@ function applyFiltersToCard(grayCard, filteredCard) {
   // regions against a dark background (i.e., the credit card numbers).
   let tophat = new cv.Mat();
   cv.morphologyEx(grayCard, tophat, cv.MORPH_TOPHAT, rectKernel)
-   // outputToCanvas(tophat);
+  // outputToCanvas(tophat);
 
   // Compute the Sobel gradient of the tophat image.
   // Set the order of the derivative in x direction.
@@ -107,7 +107,7 @@ function applyFiltersToCard(grayCard, filteredCard) {
   // https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_gradients/py_gradients.html#one-important-matter
   cv.convertScaleAbs(gradX, gradX, 1, 0);
   gradX.convertTo(gradX, cv.CV_8U);
-   // outputToCanvas(gradX);
+  // outputToCanvas(gradX);
 
   // Apply a closing operation using the rectangular kernel to help
   // close gaps between credit card number regions.
@@ -167,10 +167,8 @@ function detectDigit(group, digitRect, refDigits, refSize) {
     // Apply correlation-based template matching and take the score.
     cv.matchTemplate(cardDigit, refDigits[i], cardDigitDst, cv.TM_CCOEFF, mask);
     let score = cv.minMaxLoc(cardDigitDst, mask).maxVal;
-    console.log(score);
     scores.push(score);
   }
-  console.log('nextDigit');
   cardDigit.delete(); cardDigitDst.delete(); mask.delete();
   // Take the *largest* template matching score.
   return scores.indexOf(Math.max(...scores));
@@ -244,7 +242,13 @@ function startCardProcessing(src, rectPointUpperLeft, rectPointBottomRight) {
     //   new cv.Point(rect.x + rect.width + 5, rect.y + rect.height + 5), redColor, 2);
   }
   // outputToCanvas(grayCard);
-  cv.imshow('outputImage', grayCard);
+  grayCard.copyTo(src
+    .rowRange(rectPointUpperLeft.y, rectPointBottomRight.y)
+    .colRange(rectPointUpperLeft.x, rectPointBottomRight.x));
+  const color = [0, 0, 255, 255]; // Blue
+  //cv.rectangle(src, rectPointUpperLeft, rectPointBottomRight, color, 3);
+  cv.imshow('canvasOutput', src);
+  //cv.imshow('outputImage', grayCard);
 
   if (output[0]) {
     showOutput(output);

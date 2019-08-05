@@ -11,14 +11,15 @@ let videoCapturer = null;
 let src = null;
 let dst = null;
 
-const CARD_MAX_AREA = 120000;
-const CARD_MIN_AREA = 25000;
-
 // We draw rectangle for card on video stream.
 let rectPointUpperLeft;
 let rectPointBottomRight;
-const rectColor = [0, 255, 0, 255]; // Green
 let edgeRect;
+const rectColor = [0, 255, 0, 255]; // Green
+
+const contourColor = [255, 0, 0, 255];
+const CARD_MIN_AREA = 145000;
+const CARD_MAX_AREA = 165000;
 
 
 function calculateRectCoordinates() {
@@ -51,23 +52,17 @@ function completeStyling() {
 
   document.querySelector('.canvas-wrapper').style.height =
     `${video.videoHeight}px`;
-
-  //document.getElementById('takePhotoButton').disabled = false;
-  document.getElementById('refreshButton').disabled = true;
-  document.getElementById('doneButton').disabled = true;
 }
 
 function processVideo() {
   try {
     if (!streaming) {
-      src.delete();
-      dst.delete();
+      cleanupAndStop();
       return;
     }
     stats.begin();
     videoCapturer.read(src);
 
-    // startCardProcessing(src, rectPointUpperLeft, rectPointBottomRight);
     cv.cvtColor(src, dst, cv.COLOR_RGB2GRAY, 0);
     //let roi = new cv.Mat();
     //roi = dst.roi(edgeRect);
@@ -79,24 +74,27 @@ function processVideo() {
     let hierarchy = new cv.Mat();
     let dstDraw = cv.Mat.zeros(dst.rows, dst.cols, cv.CV_8UC3);
     cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-    let color = new cv.Scalar(255, 0, 0);
     for (let i = 0; i < contours.size(); ++i) {
-      cv.drawContours(dstDraw, contours, i, color, 1, cv.LINE_8, hierarchy, 100);
-    }
-    cv.imshow('outputImage', dstDraw);
-    dstDraw.delete();
-     for (let i = 0; i < contours.size(); ++i) {
-       let tmp = new cv.Mat();
-       let size = cv.contourArea(contours.get(i));
-       let peri = cv.arcLength(contours.get(i), true);
-       cv.approxPolyDP(contours.get(i), tmp, 0.01 * peri, true);
+      let tmp = new cv.Mat();
+      let cnt = contours.get(i);
+      let size = cv.contourArea(cnt);
+      let peri = cv.arcLength(cnt, true);
+      cv.approxPolyDP(cnt, tmp, 0.01 * peri, true);
 
-      //if ((size < CARD_MAX_AREA) && (size > CARD_MIN_AREA) && (tmp.rows == 4)) {
-      if (tmp.rows == 4) {
+      if (size > CARD_MIN_AREA && size < CARD_MAX_AREA && tmp.rows == 4) {
         console.log('size', size, 'peri', peri);
+        cv.drawContours(dstDraw, contours, i, contourColor, 1, cv.LINE_8, hierarchy, 100);
+        cv.imshow('outputImage2', dstDraw);
+        startCardProcessing(src, rectPointUpperLeft, rectPointBottomRight);
+        document.getElementById('retryButton').disabled = false;
+        //cleanupAndStop();
+        return;
       }
-      tmp.delete();
-     }
+      tmp.delete(); cnt.delete();
+    }
+    cv.imshow('outputImage2', dstDraw);
+
+    dstDraw.delete();
     contours.delete(); hierarchy.delete();
     //roi.delete();
 
@@ -141,21 +139,22 @@ function initUI() {
     document.getElementById('cannyThreshold2Output').value =
       controls.tr2 = parseInt(tr2.value);
   };
+
+  let retryButton = document.getElementById('retryButton');
+  retryButton.addEventListener('click', function () {
+    document.getElementById('retryButton').disabled = true;
+    startVideoProcessing();
+  });
 }
 
 function startCamera() {
   utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
 }
 
-function stopCamera(videoElem) {
-  if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
-  } else {
-    utils.stopCamera();
-    onVideoStopped();
-  }
-};
+function cleanupAndStop() {
+  src.delete(); dst.delete();
+  utils.stopCamera(); onVideoStopped();
+}
 
 utils.loadOpenCv(() => {
   initUI();
