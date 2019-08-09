@@ -101,10 +101,10 @@ function processVideo() {
   }
 };
 
-function startCamera() {
+function startCamera(videoConstraint, videoElemId, onVideoStarted) {
   if (!streaming) {
     utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+    utils.startCamera(videoConstraint, videoElemId, onVideoStarted);
   } else {
     utils.stopCamera();
     onVideoStopped();
@@ -150,8 +150,8 @@ function initUI() {
       videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
     }
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
+    //utils.stopCamera();
+    //utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 }
 

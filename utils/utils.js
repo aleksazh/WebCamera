@@ -206,8 +206,6 @@ function setMainCanvasProperties(video) {
 
 function onVideoStarted() {
   streaming = true;
-  videoTrack = video.srcObject.getVideoTracks()[0];
-  imageCapturer = new ImageCapture(videoTrack);
   setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
   imageCapturer = new ImageCapture(videoTrack);
@@ -256,13 +254,24 @@ function initCameraSettingsAndStart() {
         }
       }
 
-      // Set initial facingMode value if camera is available.
-      if (controls.backCamera != null) {
-        controls.facingMode = 'environment';
-        videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
+      // Start back and front camera.
+      if (controls.frontCamera != null) {
+        videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
+        startCamera(videoConstraint, 'frontVideoInput', function () {
+          let frontVideoElem = document.getElementById('frontVideoInput');
+          frontVideoElem.width = frontVideoElem.videoWidth;
+          frontVideoElem.height = frontVideoElem.videoHeight;
+          if (controls.backCamera != null) {
+            // Initial facingMode is back camera.
+            controls.facingMode = 'environment';
+            videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
+            startCamera(videoConstraint, 'videoInput', onVideoStarted);
+          }
+          return;
+        });
       }
 
-      startCamera();
+      startCamera(videoConstraint, 'videoInput', onVideoStarted);
     });
 }
 

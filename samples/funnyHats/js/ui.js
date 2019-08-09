@@ -124,15 +124,18 @@ function initUI() {
   facingModeButton.addEventListener('click', function () {
     if (controls.facingMode == 'user') {
       controls.facingMode = 'environment';
-      videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
+      //videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
       facingModeButton.innerText = 'camera_front';
+      video = document.getElementById('videoInput');
+
     } else if (controls.facingMode == 'environment') {
       controls.facingMode = 'user';
-      videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
+      //videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
+      video = document.getElementById('frontVideoInput');
     }
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
+    //utils.stopCamera();
+    //utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 }
 
