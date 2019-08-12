@@ -9,6 +9,8 @@ let videoTrack = null;
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 
+let worker;
+
 let videoCapturer = null;
 let src = null;
 let gray = null;
@@ -39,6 +41,14 @@ function initOpencvObjects() {
   eyes = new cv.RectVector();
   eyeCascade = new cv.CascadeClassifier();
   eyeCascade.load(eyeDetectionPath);
+
+  worker = new Worker('worker.js');
+  worker.onmessage = function (e) {
+    console.log('Message received from worker');
+    console.log(e.data);
+  }
+  worker.postMessage([3,5]);
+  console.log('Posting message to worker');
 }
 
 function deleteOpencvObjects() {
@@ -114,6 +124,7 @@ function startCamera() {
 function cleanupAndStop() {
   deleteOpencvObjects();
   utils.stopCamera(); onVideoStopped();
+  worker.terminate();
 }
 
 function initUI() {
