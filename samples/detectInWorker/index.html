@@ -56,15 +56,12 @@
     self.postMessage({response: 'init_ok'});
   }
 
+  var canv;
   self.addEventListener('message', (msg) => {
     switch (msg.data.cmd) {
       case 'detect': {
         let objects = [];
-        let buffer = msg.data.buf;
-        let height = msg.data.height;
-        let width = msg.data.width;
-        let mat = new cv.Mat(height, width, cv.CV_8UC4);
-        mat.data.set(new Uint8Array(buffer));
+        let mat = cv.imread(offscreen);
         cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
         let results = new cv.RectVector();
         classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
@@ -78,6 +75,22 @@
       }
       case 'passthrough': {
         self.postMessage({response: 'passthrough'});
+        break;
+      }
+      case 'init': {
+        canv = msg.data.offscreen;
+        let objects = [];
+        let mat = cv.imread(offscreen);
+        cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
+        let results = new cv.RectVector();
+        classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
+        console.log('worker detect ' + results.size());
+        for (let i = 0; i < results.size(); i++) {
+          objects.push(results.get(i));
+        }
+        self.postMessage({response: 'detect', objects: objects});
+        mat.delete();
+        results.delete();
         break;
       }
       default: {
