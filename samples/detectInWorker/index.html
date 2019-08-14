@@ -56,9 +56,9 @@
     switch (msg.data.cmd) {
       case 'detect': {
         buffer = msg.data.buffer;
-        let mat = cv.matFromImageData(buffer);
-        //let mat = new cv.Mat(height, width, cv.CV_8UC4);
-        //mat.data.set(new Uint8Array(buffer));
+        //let mat = cv.matFromImageData(buffer);
+        let mat = new cv.Mat(height, width, cv.CV_8UC4);
+        mat.data.set(new Uint8Array(buffer));
         cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
         let results = new cv.RectVector();
         let objects = [];
@@ -75,9 +75,9 @@
         buffer = msg.data.buffer;
         width = msg.data.width;
         height = msg.data.height;
-        let mat = cv.matFromImageData(buffer);
-        //let mat = new cv.Mat(height, width, cv.CV_8UC4);
-        //mat.data.set(new Uint8Array(buffer));
+        //let mat = cv.matFromImageData(buffer);
+        let mat = new cv.Mat(height, width, cv.CV_8UC4);
+        mat.data.set(new Uint8Array(buffer));
         cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
         let results = new cv.RectVector();
         let objects = [];

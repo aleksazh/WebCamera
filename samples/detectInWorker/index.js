@@ -50,8 +50,8 @@ function startVideoProcessing() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   vc.read(src);
   cv.imshow('canvasOutput', src);
-  //let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
-  let buf = canvasContext.getImageData(0, 0, video.width, video.height);
+  let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+  //let buf = canvasContext.getImageData(0, 0, video.width, video.height);
   worker.postMessage({ cmd: 'init', width: width, height: height, buffer: buf });
   requestAnimationFrame(processVideo);
 }
@@ -76,14 +76,9 @@ function onVideoProcessed(msg) {
     case 'detect': {
       faces = msg.data.objects;
       console.log('main thread ' + faces.length);
-      let buf = canvasContext.getImageData(0, 0, video.width, video.height);
-      worker.postMessage({ cmd: 'detect', buffer: buf });
-      //let buffer = msg.data.buf;
-      //let imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
-      //canvasOutputCtx.putImageData(imageData, 0, 0);
-      // canvasInputCtx.drawImage(video, 0, 0, video.width, video.height);
-      // let buffer = canvasInputCtx.getImageData(0, 0, canvasInput.width, canvasInput.height).data.buffer;
-      // worker.postMessage({ cmd: 'detect', buf: buffer, width: canvasInput.width, height: canvasInput.height }, [buffer]);
+      //let buf = canvasContext.getImageData(0, 0, video.width, video.height);
+      let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+      worker.postMessage({ cmd: 'detect', width: width, height: height, buffer: buf });
       break;
     }
     default:
