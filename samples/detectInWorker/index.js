@@ -6,7 +6,7 @@ let streaming = false;
 
 let video = document.getElementById('video');
 let canvasOutput = document.getElementById('canvasOutput');
-//let canvasOutputCtx = canvasOutput.getContext('2d');
+let canvasContext = canvasOutput.getContext('2d');
 let stream = null;
 let vc = null;
 
@@ -36,74 +36,48 @@ function startCamera() {
   }, false);
 }
 
-let = null;
 let profileFaceClassifier = null;
 let eyeClassifier = null;
 let faces = 0;
 
 let src = null;
-let dstC1 = null;
-let dstC3 = null;
-let dstC4 = null;
-
-let canvasInput = null;
-let canvasInputCtx = null;
-
 let worker = null;
 
 function startVideoProcessing() {
   if (!streaming) { console.warn("Please startup your webcam"); return; }
   stopVideoProcessing();
-  canvasInput = document.createElement('canvas');
-  canvasInput.width = width;
-  canvasInput.height = height;
-  //canvasInputCtx = canvasInput.getContext('2d');
   vc = new cv.VideoCapture(video);
-  srcInput = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-  srcOutput = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-  vc.read(srcInput);
-  cv.imshow(canvasInput, srcInput);
-  let offscreen = canvasInput.transferControlToOffscreen();
-  worker.postMessage({ cmd: 'init', offscreen: offscreen }, [offscreen]);
+  src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+  vc.read(src);
+  cv.imshow('canvasOutput', src);
+  //let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+  let buf = canvasContext.getImageData(0, 0, video.width, video.height);
+  worker.postMessage({ cmd: 'init', width: width, height: height, buffer: buf });
   requestAnimationFrame(processVideo);
 }
 
 function processVideo() {
-  //stats.begin();
-  vc.read(srcOutput);
+  stats.begin();
+  vc.read(src);
   for (let i = 0; i < faces.length; ++i) {
     let face = faces[i];
     // Draw face.
     let facePointUpperLeft = new cv.Point(face.x, face.y);
     let facePointBottomRight =
       new cv.Point(face.x + face.width, face.y + face.height);
-    cv.rectangle(srcOutput, facePointUpperLeft, facePointBottomRight, [255, 0, 0, 255]);
+    cv.rectangle(src, facePointUpperLeft, facePointBottomRight, [255, 0, 0, 255]);
   }
-  cv.imshow('canvasOutput', srcOutput);
-  //canvasOutputCtx.drawImage(video, 0, 0, video.width, video.height);
+  cv.imshow('canvasOutput', src);
   requestAnimationFrame(processVideo);
 }
 
 function onVideoProcessed(msg) {
   switch (msg.data.response) {
-    case 'passthrough': {
-      vc.read(srcInput);
-      cv.imshow(canvasInput, srcInput);
-      worker.postMessage({ cmd: 'detect' });
-      //let buffer = msg.data.buf;
-      //let imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
-      //canvasOutputCtx.putImageData(imageData, 0, 0);
-      // canvasInputCtx.drawImage(video, 0, 0, video.width, video.height);
-      // let buffer = canvasInputCtx.getImageData(0, 0, canvasInput.width, canvasInput.height).data.buffer;
-      // worker.postMessage({ cmd: 'detect', buf: buffer, width: canvasInput.width, height: canvasInput.height }, [buffer]);
-      break;
-    }
     case 'detect': {
       faces = msg.data.objects;
       console.log('main thread ' + faces.length);
-      vc.read(srcInput);
-      cv.imshow(canvasInput, srcInput);
-      worker.postMessage({ cmd: 'detect' });
+      let buf = canvasContext.getImageData(0, 0, video.width, video.height);
+      worker.postMessage({ cmd: 'detect', buffer: buf });
       //let buffer = msg.data.buf;
       //let imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
       //canvasOutputCtx.putImageData(imageData, 0, 0);
@@ -119,24 +93,8 @@ function onVideoProcessed(msg) {
   requestAnimationFrame(processVideo);
 }
 
-function drawResults(gray, results, dst) {
-  for (let i = 0; i < results.size(); ++i) {
-    let roiGray = gray.getRoiRect(results.get(i));
-    let roiDst = dst.getRoiRect(results.get(i));
-    cv.rectangle(dst, { x: results.get(i).x, y: results.get(i).y },
-      {
-        x: results.get(i).x + results.get(i).width,
-        y: results.get(i).y + results.get(i).height
-      },
-      [255, 0, 0, 255]);
-  }
-}
-
 function stopVideoProcessing() {
   if (src != null && !src.isDeleted()) src.delete();
-  if (dstC1 != null && !dstC1.isDeleted()) dstC1.delete();
-  if (dstC3 != null && !dstC3.isDeleted()) dstC3.delete();
-  if (dstC4 != null && !dstC4.isDeleted()) dstC4.delete();
 }
 
 function stopCamera() {

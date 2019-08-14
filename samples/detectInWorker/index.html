@@ -4,14 +4,6 @@
   <div id="container">
     <canvas class="center-block" id="canvasOutput" width=320 height=240></canvas>
   </div>
-  <div class="text-center">
-    <input type="checkbox" id="frontal" name="cascade" value="frontal">
-    <label for="frontal">frontal</label>
-    <input type="checkbox" id="profile" name="cascade" value="profile">
-    <label for="profile">profile</label>
-    <input type="checkbox" id="eye" name="cascade" value="eye">
-    <label for="eye">eye</label>
-  </div>
   <link href="style.css" rel="stylesheet" type="text/css" />
   <div class="invisible">
     <video id="video" class="hidden">Your browser does not support the video tag.</video>
@@ -21,7 +13,7 @@
 <script src="https://rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.5/dat.gui.min.js"></script>
 <script>
-  var Module = {
+  let Module = {
     preRun: [function () {
       Module.FS_createPreloadedFile('/', 'haarcascade_eye.xml', 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_eye.xml', true, false);
       Module.FS_createPreloadedFile('/', 'haarcascade_frontalface_default.xml', 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml', true, false);
@@ -32,7 +24,7 @@
 </script>
 <script async src="https://huningxin.github.io/opencv.js/build/asm.js/opencv.js"></script>
 <script type="text/js-worker">
- var Module = {
+ let Module = {
     preRun: [function() {
       Module.FS_createPreloadedFile('/', 'haarcascade_eye.xml', 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_eye.xml', true, false);
       Module.FS_createPreloadedFile('/', 'haarcascade_frontalface_default.xml', 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml', true, false);
@@ -48,7 +40,7 @@
     workerInit();
   }
 
-  var classifier;
+  let classifier;
   function workerInit() {
     classifier = new cv.CascadeClassifier();
     let status = classifier.load('haarcascade_frontalface_default.xml');
@@ -56,14 +48,20 @@
     self.postMessage({response: 'init_ok'});
   }
 
-  var canv;
+  var buffer;
+  let width;
+  let height;
+
   self.addEventListener('message', (msg) => {
     switch (msg.data.cmd) {
       case 'detect': {
-        let objects = [];
-        let mat = cv.imread(offscreen);
+        buffer = msg.data.buffer;
+        let mat = cv.matFromImageData(buffer);
+        //let mat = new cv.Mat(height, width, cv.CV_8UC4);
+        //mat.data.set(new Uint8Array(buffer));
         cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
         let results = new cv.RectVector();
+        let objects = [];
         classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
         console.log('worker detect ' + results.size());
         for (let i = 0; i < results.size(); i++) {
@@ -73,16 +71,16 @@
         mat.delete();
         results.delete();
       }
-      case 'passthrough': {
-        self.postMessage({response: 'passthrough'});
-        break;
-      }
       case 'init': {
-        canv = msg.data.offscreen;
-        let objects = [];
-        let mat = cv.imread(offscreen);
+        buffer = msg.data.buffer;
+        width = msg.data.width;
+        height = msg.data.height;
+        let mat = cv.matFromImageData(buffer);
+        //let mat = new cv.Mat(height, width, cv.CV_8UC4);
+        //mat.data.set(new Uint8Array(buffer));
         cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY);
         let results = new cv.RectVector();
+        let objects = [];
         classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
         console.log('worker detect ' + results.size());
         for (let i = 0; i < results.size(); i++) {
