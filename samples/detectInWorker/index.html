@@ -55,7 +55,6 @@
   self.addEventListener('message', (msg) => {
     switch (msg.data.cmd) {
       case 'detect': {
-        buffer = msg.data.buffer;
         //let mat = cv.matFromImageData(buffer);
         let mat = new cv.Mat(height, width, cv.CV_8UC4);
         mat.data.set(new Uint8Array(buffer));
@@ -63,7 +62,7 @@
         let results = new cv.RectVector();
         let objects = [];
         classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
-        console.log('worker detect ' + results.size());
+        //console.log('worker detect ' + results.size());
         for (let i = 0; i < results.size(); i++) {
           objects.push(results.get(i));
         }
@@ -82,7 +81,7 @@
         let results = new cv.RectVector();
         let objects = [];
         classifier.detectMultiScale(mat, results, 1.1, 3, 0, {width : 0, height : 0}, {width : 0, height : 0});
-        console.log('worker detect ' + results.size());
+        //console.log('worker detect ' + results.size());
         for (let i = 0; i < results.size(); i++) {
           objects.push(results.get(i));
         }

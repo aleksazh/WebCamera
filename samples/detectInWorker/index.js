@@ -10,6 +10,8 @@ let canvasContext = canvasOutput.getContext('2d');
 let stream = null;
 let vc = null;
 
+let sharedBuffer;
+
 function startCamera() {
   if (streaming) return;
   navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -30,6 +32,7 @@ function startCamera() {
       video.height = height;
       canvasOutput.width = width;
       canvasOutput.height = height;
+      sharedBuffer = new SharedArrayBuffer(width * height * 4);
       streaming = true;
     }
     startVideoProcessing();
@@ -50,9 +53,13 @@ function startVideoProcessing() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   vc.read(src);
   cv.imshow('canvasOutput', src);
-  let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
-  //let buf = canvasContext.getImageData(0, 0, video.width, video.height);
-  worker.postMessage({ cmd: 'init', width: width, height: height, buffer: buf });
+  //sharedBuffer = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+  let arr = new Uint8Array(sharedBuffer);
+  let imageData = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+  for (let i = 0; i < imageData.byteLength; ++i) {
+    arr[i] = imageData[i];
+  }
+  worker.postMessage({ cmd: 'init', width: width, height: height, buffer: sharedBuffer });
   requestAnimationFrame(processVideo);
 }
 
@@ -76,9 +83,12 @@ function onVideoProcessed(msg) {
     case 'detect': {
       faces = msg.data.objects;
       console.log('main thread ' + faces.length);
-      //let buf = canvasContext.getImageData(0, 0, video.width, video.height);
-      let buf = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
-      worker.postMessage({ cmd: 'detect', width: width, height: height, buffer: buf });
+      let arr = new Uint8Array(sharedBuffer);
+      let imageData = canvasContext.getImageData(0, 0, video.width, video.height).data.buffer;
+      for (let i = 0; i < imageData.byteLength; ++i) {
+        arr[i] = imageData[i];
+      }
+      worker.postMessage({ cmd: 'detect' });
       break;
     }
     default:
