@@ -176,7 +176,7 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  if (!isMobileDevice()) {
+  //if (!isMobileDevice()) {
     // Init threads number.
     let threadsControl = document.getElementsByClassName('threads-control')[0];
     threadsControl.classList.remove('hidden');
@@ -190,7 +190,7 @@ function initUI() {
     threadsNum.addEventListener('change', () => {
       cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
     });
-  }
+  //}
 
   // Event listener for dowscale parameter.
   let downscaleLevelInput = document.getElementById('downscaleLevel');
