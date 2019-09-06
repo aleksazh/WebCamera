@@ -74,7 +74,7 @@ function processVideo() {
     tensorflowNet.setInput(inputBlob);
     const outputBlob = tensorflowNet.forward();
 
-    //canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
+    canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
     //drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
 
     stats.end();
@@ -153,10 +153,10 @@ function initUI() {
     threadsNumLabel.innerHTML = `Number of threads (1 - ${threadsNum.max}):&nbsp;`;
     if (3 <= threadsNum.max) threadsNum.value = 3;
     else threadsNum.value = 1;
-    cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-    threadsNum.addEventListener('change', () => {
-      cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-    });
+    // cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+    // threadsNum.addEventListener('change', () => {
+    //   cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+    // });
   }
 
   // Event listener for dowscale parameter.
