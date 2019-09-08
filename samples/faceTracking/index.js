@@ -16,10 +16,10 @@ let gray = null;
 let faceVec = null;
 let tensorflowNet = null;
 
-const modelPath = 'ssd_mobilenet_v2.pb';
-const modelUrl = '../../data/classifiers/ssd_mobilenet_v2.pb';
-const configurationPath = 'ssd_mobilenet_v2.pbtxt';
-const configurationUrl = '../../data/classifiers/ssd_mobilenet_v2.pbtxt';
+const modelPath = 'opencv_face_detector.pb';
+const modelUrl = '../../data/classifiers/opencv_face_detector.pb';
+const configurationPath = 'opencv_face_detector.pbtxt';
+const configurationUrl = '../../data/classifiers/opencv_face_detector.pbtxt';
 
 const faceColor = [0, 255, 255, 255];
 
@@ -66,16 +66,33 @@ function processVideo() {
     src.data.set(imageData.data);
 
     // Detect faces.
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2RGB, 0);
-    for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(gray, gray);
-    //let matSize = gray.size();
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2BGR, 0);
+    //for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(gray, gray);
+    let matSize = gray.size();
 
-    const inputBlob = cv.blobFromImage(gray);
+    const inputBlob = cv.blobFromImage(gray, 1, {width: 300, height: 300}, [104, 177, 123, 0], false, false);
     tensorflowNet.setInput(inputBlob);
     const outputBlob = tensorflowNet.forward();
 
+    var faces = [];
+    let confidence = 0;
+    for (let i = 0; i < outputBlob.data32F.length; i += 7) {
+      confidence = outputBlob.data32F[i + 2];
+      var left = outputBlob.data32F[i + 3] * gray.cols;
+      var top = outputBlob.data32F[i + 4] * gray.rows;
+      var right = outputBlob.data32F[i + 5] * gray.cols;
+      var bottom = outputBlob.data32F[i + 6] * gray.rows;
+      left = Math.min(Math.max(0, left), gray.cols - 1);
+      right = Math.min(Math.max(0, right), gray.cols - 1);
+      bottom = Math.min(Math.max(0, bottom), gray.rows - 1);
+      top = Math.min(Math.max(0, top), gray.rows - 1);
+      if (confidence > 0.7 && left < right && top < bottom) {
+        faces.push({x: left, y: top, width: right - left, height: bottom - top});
+      }
+    }
+
     canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
-    //drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
+    drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
 
     stats.end();
     requestAnimationFrame(processVideo);

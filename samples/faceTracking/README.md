@@ -54,5 +54,5 @@ faceGray.delete();
 
 ## References
 
-1. [Haar-cascade face and eyes detection in OpenCV](https://docs.opencv.org/3.4.1/d2/d99/tutorial_js_face_detection.html)
-2. [Face Detection Camera Example (OpenCV)](https://docs.opencv.org/3.4.1/df/d6c/tutorial_js_face_detection_camera.html)
+1. [](https://github.com/spmallick/learnopencv/tree/master/FaceDetectionComparison/models)
+2. [](http://datahacker.rs/j-face-detection-with-opencv/)
