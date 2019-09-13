@@ -14,12 +14,17 @@ let canvasInputCtx = null;
 let src = null;
 let gray = null;
 let faceVec = null;
-let tensorflowNet = null;
+let faceNet = null;
+let keypointsNet = null;
 
-const modelPath = 'opencv_face_detector.pb';
-const modelUrl = '../../data/classifiers/opencv_face_detector.pb';
-const configurationPath = 'opencv_face_detector.pbtxt';
-const configurationUrl = '../../data/classifiers/opencv_face_detector.pbtxt';
+const faceDetectorModelPath = 'face_detector.pb';
+const faceDetectorModelUrl = '../../data/classifiers/face_detector.pb';
+const faceDetectorConfigurationPath = 'face_detector.pbtxt';
+const faceDetectorConfigurationUrl = '../../data/classifiers/face_detector.pbtxt';
+const faceKeypointsModelPath = 'facial_keypoints.pb';
+const faceKeypointsModelUrl = '../../data/classifiers/facial_keypoints.pb';
+const faceKeypointsConfigurationPath = 'facial_keypoints.pbtxt';
+const faceKeypointsConfigurationUrl = '../../data/classifiers/facial_keypoints.pbtxt';
 
 const faceColor = [0, 255, 255, 255];
 
@@ -30,12 +35,14 @@ let downscaleLevel = 1;
 function initOpencvObjects() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   gray = new cv.Mat();
-  tensorflowNet = cv.readNetFromTensorflow(modelPath, configurationPath);
+  faceNet = cv.readNetFromTensorflow(faceDetectorModelPath, faceDetectorConfigurationPath);
+  keypointsNet = cv.readNetFromTensorflow(faceKeypointsModelPath);
 }
 
 function deleteOpencvObjects() {
   src.delete(); gray.delete();
-  faceVec.delete(); tensorflowNet.delete();
+  faceVec.delete();
+  faceNet.delete(); keypointsNet.delete();
 }
 
 function completeStyling() {
@@ -70,9 +77,9 @@ function processVideo() {
     //for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(gray, gray);
     let matSize = gray.size();
 
-    const inputBlob = cv.blobFromImage(gray, 1, {width: 300, height: 300}, [104, 177, 123, 0], false, false);
-    tensorflowNet.setInput(inputBlob);
-    const outputBlob = tensorflowNet.forward();
+    const inputBlob = cv.blobFromImage(gray, 1, { width: 300, height: 300 }, [104, 177, 123, 0], false, false);
+    faceNet.setInput(inputBlob);
+    const outputBlob = faceNet.forward();
 
     var faces = [];
     let confidence = 0;
@@ -87,7 +94,13 @@ function processVideo() {
       bottom = Math.min(Math.max(0, bottom), gray.rows - 1);
       top = Math.min(Math.max(0, top), gray.rows - 1);
       if (confidence > 0.7 && left < right && top < bottom) {
-        faces.push({x: left, y: top, width: right - left, height: bottom - top});
+        faces.push({ x: left, y: top, width: right - left, height: bottom - top });
+
+        let faceRoi = gray.roi(faces[i]);
+        const keypointsInputBlob = cv.blobFromImage(gray);
+        keypointsNet.setInput(keypointsInputBlob);
+        const keypointsOutputBlob = keypointsNet.forward();
+        faceRoi.delete();
       }
     }
 
@@ -188,10 +201,14 @@ function initUI() {
 }
 
 utils.loadOpenCv(() => {
-  utils.createFileFromUrl(modelPath, modelUrl, () => {
-    utils.createFileFromUrl(configurationPath, configurationUrl, () => {
-      initUI();
-      initCameraSettingsAndStart();
+  utils.createFileFromUrl(faceDetectorModelPath, faceDetectorModelUrl, () => {
+    utils.createFileFromUrl(faceDetectorConfigurationPath, faceDetectorConfigurationUrl, () => {
+      utils.createFileFromUrl(faceKeypointsModelPath, faceKeypointsModelUrl, () => {
+        utils.createFileFromUrl(faceKeypointsConfigurationPath, faceKeypointsConfigurationUrl, () => {
+          initUI();
+          initCameraSettingsAndStart();
+        });
+      });
     });
   });
 });

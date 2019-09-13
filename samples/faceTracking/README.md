@@ -56,10 +56,12 @@ faceGray.delete();
 
 1. [](https://github.com/spmallick/learnopencv/tree/master/FaceDetectionComparison/models)
 2. [](http://datahacker.rs/j-face-detection-with-opencv/)
-3. [](https://github.com/opencv/opencv/issues/12075)
+3. [](https://github.com/opencv/opencv/issues/12075#issuecomment-420191142)
 4. [](https://docs.opencv.org/master/d5/d86/tutorial_dnn_javascript.html)
 5. [](https://github.com/intel/webml-polyfill/issues/373)
 6. [Simple CNN .pb file](https://drive.google.com/file/d/1Nvzu5A9CjP70sDhiRbMzuIwFLnrq2Qpw/view)
 7. [](https://github.com/intel/webml-polyfill/blob/master/examples/facial_landmark_detection/model/README.md)
 8. [](https://github.com/tensorflow/models/blob/master/research/object_detection/models/ssd_mobilenet_v1_feature_extractor.py)
 9. [Dataset for face alignment](http://www.cbsr.ia.ac.cn/users/xiangyuzhu/projects/3DDFA/main.htm)
+10. [Convert mat file to json](https://gist.github.com/pgoeser/1392506)
+11. [](https://github.com/yinguobing/butterfly)
