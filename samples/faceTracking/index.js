@@ -97,7 +97,9 @@ function processVideo() {
         faces.push({ x: left, y: top, width: right - left, height: bottom - top });
 
         let faceRoi = gray.roi(faces[i]);
-        const keypointsInputBlob = cv.blobFromImage(gray);
+        let dim = new cv.Size(128, 128);
+        cv.resize(faceRoi, faceRoi, dim, cv.INTER_AREA);
+        const keypointsInputBlob = cv.blobFromImage(gray, 1, { width: 128, height: 128 });
         keypointsNet.setInput(keypointsInputBlob);
         const keypointsOutputBlob = keypointsNet.forward();
         faceRoi.delete();
