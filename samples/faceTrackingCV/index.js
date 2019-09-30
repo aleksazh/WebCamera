@@ -17,10 +17,8 @@ let faceVec = null;
 let faceNet = null;
 let keypointsNet = null;
 
-const faceDetectorModelPath = 'face_detector.pb';
-const faceDetectorModelUrl = '../../data/classifiers/face_detector.pb';
-const faceDetectorConfigurationPath = 'face_detector.pbtxt';
-const faceDetectorConfigurationUrl = '../../data/classifiers/face_detector.pbtxt';
+const faceDetectionPath = 'haarcascade_frontalface_default.xml';
+const faceDetectionUrl = '../../data/classifiers/haarcascade_frontalface_default.xml';
 const faceKeypointsModelPath = 'facial_keypoints.pb';
 const faceKeypointsModelUrl = '../../data/classifiers/facial_keypoints.pb';
 const faceKeypointsConfigurationPath = 'facial_keypoints.pbtxt';
@@ -187,10 +185,10 @@ function initUI() {
     threadsNumLabel.innerHTML = `Number of threads (1 - ${threadsNum.max}):&nbsp;`;
     if (3 <= threadsNum.max) threadsNum.value = 3;
     else threadsNum.value = 1;
-    // cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-    // threadsNum.addEventListener('change', () => {
-    //   cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-    // });
+    cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+    threadsNum.addEventListener('change', () => {
+      cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+    });
   }
 
   // Event listener for dowscale parameter.
@@ -205,14 +203,10 @@ function initUI() {
 }
 
 utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectorModelPath, faceDetectorModelUrl, () => {
-    utils.createFileFromUrl(faceDetectorConfigurationPath, faceDetectorConfigurationUrl, () => {
-      utils.createFileFromUrl(faceKeypointsModelPath, faceKeypointsModelUrl, () => {
-        utils.createFileFromUrl(faceKeypointsConfigurationPath, faceKeypointsConfigurationUrl, () => {
-          initUI();
-          initCameraSettingsAndStart();
-        });
-      });
+  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+    utils.createFileFromUrl(faceKeypointsConfigurationPath, faceKeypointsConfigurationUrl, () => {
+      initUI();
+      initCameraSettingsAndStart();
     });
   });
 });
