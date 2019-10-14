@@ -14,6 +14,8 @@ const constraints_mobile = {
     }
 };
 
+const NUMBER_OF_PHOTOS = 4;
+
 var videoTag = document.getElementById('video-tag');
 
 var takePhotoCanvas1 = document.getElementById('takePhotoCanvas1');
@@ -22,7 +24,7 @@ var takePhotoCanvas3 = document.getElementById('takePhotoCanvas3');
 var takePhotoCanvas4 = document.getElementById('takePhotoCanvas4');
 var takePhotoCanvasArray = new Array(takePhotoCanvas1, takePhotoCanvas2,
   takePhotoCanvas3, takePhotoCanvas4);
-var images_list = new Array(3);
+var images_list = new Array(NUMBER_OF_PHOTOS);
 var imageHDR = document.getElementById('imageHDR');
 
 var exposureTimeSlider = document.getElementById("exposureTime-slider");
@@ -31,10 +33,10 @@ var exposureTimeSliderValue = document.getElementById(
 var takePhotoButton = document.getElementById('takePhotoButton');
 var imageCapturer;
 var counter = 0;
-var exposureTimeArray = new Float32Array(3);
+var exposureTimeArray = new Float32Array(NUMBER_OF_PHOTOS);
 //var exposureTimeArray = new Uint8Array(3);
 
-// Assume there is a list of 3 images at various exposure time.
+// Assume there is a list of 4 images at various exposure time.
 
 function startCamera() {
   document.querySelector('#start').style.display = 'none';
@@ -223,8 +225,8 @@ function createHDR() {
 }
 
 function checkCounter() {
-  if (counter > 3) {
-      takePhotoButton.text('3 pictures taken!');
+  if (counter > NUMBER_OF_PHOTOS) {
+      takePhotoButton.text(`${NUMBER_OF_PHOTOS}`, ' pictures taken!');
       takePhotoButton.disabled = true;
       document.getElementById('createHDRButton').disabled = false;
       return false;
