@@ -74,8 +74,8 @@ function gotMedia(mediastream) {
     }
 
     exposureTimeSlider.min = capabilities.exposureTime.min;
-    exposureTimeSlider.max = capabilities.exposureTime.max;
-    exposureTimeSlider.step = capabilities.exposureTime.step;
+    exposureTimeSlider.max = 200;
+    exposureTimeSlider.step = 1;
 
     exposureTimeSlider.value = exposureTimeSliderValue.value =
       videoTrack.getSettings().exposureTime;
