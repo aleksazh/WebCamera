@@ -1,7 +1,7 @@
 const constraints_general = {
   "video": {
     width: {
-      exact: 240
+      exact: 640
     }
   }
 };
@@ -10,7 +10,7 @@ const constraints_mobile = {
   video: {
     facingMode: { exact: "environment" },
     width: {
-      exact: 240
+      exact: 640
     }
   }
 };
