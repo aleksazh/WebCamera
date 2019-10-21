@@ -12,7 +12,7 @@ let canvasInput = null;
 let canvasInputCtx = null;
 
 let src = null;
-let gray = null;
+let dst = null;
 let faceNet = null;
 
 const faceDetectionWeightsPath = 'res10_300x300_ssd_iter_140000_fp16.caffemodel';
@@ -22,18 +22,14 @@ const faceDetectionProtoUrl = '../../data/classifiers/deploy_lowres.prototxt.txt
 
 const faceColor = [0, 255, 255, 255];
 
-// In face detection, downscaleLevel parameter is used
-// to downscale resolution of input stream and insrease speed of detection.
-let downscaleLevel = 1;
-
 function initOpencvObjects() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-  gray = new cv.Mat();
+  dst = new cv.Mat();
   faceNet = cv.readNetFromCaffe(faceDetectionProtoPath, faceDetectionWeightsPath);
 }
 
 function deleteOpencvObjects() {
-  src.delete(); gray.delete();
+  src.delete(); dst.delete();
 }
 
 function completeStyling() {
@@ -61,23 +57,23 @@ function processVideo() {
     canvasInputCtx.drawImage(video, 0, 0, video.width, video.height);
     let imageData = canvasInputCtx.getImageData(0, 0, video.width, video.height);
     src.data.set(imageData.data);
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2BGR);
+    cv.cvtColor(src, dst, cv.COLOR_RGBA2BGR);
 
-    var blob = cv.blobFromImage(gray, 1, { width: 192, height: 144 }, [104, 117, 123, 0], false, false);
+    let blob = cv.blobFromImage(dst, 1, { width: 192, height: 144 }, [104, 117, 123, 0], false, false);
     faceNet.setInput(blob);
-    var out = faceNet.forward();
+    let out = faceNet.forward();
 
     let faces = [];
-    for (var i = 0, n = out.data32F.length; i < n; i += 7) {
-      var confidence = out.data32F[i + 2];
-      var left = out.data32F[i + 3] * gray.cols;
-      var top = out.data32F[i + 4] * gray.rows;
-      var right = out.data32F[i + 5] * gray.cols;
-      var bottom = out.data32F[i + 6] * gray.rows;
-      left = Math.min(Math.max(0, left), gray.cols - 1);
-      right = Math.min(Math.max(0, right), gray.cols - 1);
-      bottom = Math.min(Math.max(0, bottom), gray.rows - 1);
-      top = Math.min(Math.max(0, top), gray.rows - 1);
+    for (let i = 0, n = out.data32F.length; i < n; i += 7) {
+      let confidence = out.data32F[i + 2];
+      let left = out.data32F[i + 3] * dst.cols;
+      let top = out.data32F[i + 4] * dst.rows;
+      let right = out.data32F[i + 5] * dst.cols;
+      let bottom = out.data32F[i + 6] * dst.rows;
+      left = Math.min(Math.max(0, left), dst.cols - 1);
+      right = Math.min(Math.max(0, right), dst.cols - 1);
+      bottom = Math.min(Math.max(0, bottom), dst.rows - 1);
+      top = Math.min(Math.max(0, top), dst.rows - 1);
 
       if (confidence > 0.5 && left < right && top < bottom) {
         faces.push({ x: left, y: top, width: right - left, height: bottom - top })
@@ -87,7 +83,7 @@ function processVideo() {
     out.delete();
 
     canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
-    let matSize = gray.size();
+    let matSize = dst.size();
     drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
 
     stats.end();
@@ -171,16 +167,6 @@ function initUI() {
       cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
     });
   }
-
-  // Event listener for dowscale parameter.
-  let downscaleLevelInput = document.getElementById('downscaleLevel');
-  let downscaleLevelOutput = document.getElementById('downscaleLevelOutput');
-  downscaleLevelInput.addEventListener('input', function () {
-    downscaleLevel = downscaleLevelOutput.value = parseInt(downscaleLevelInput.value);
-  });
-  downscaleLevelInput.addEventListener('change', function () {
-    downscaleLevel = downscaleLevelOutput.value = parseInt(downscaleLevelInput.value);
-  });
 }
 
 utils.loadOpenCv(() => {
