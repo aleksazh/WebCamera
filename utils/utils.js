@@ -8,12 +8,15 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   let self = this;
   this.errorOutput = document.getElementById(errorOutputId);
 
-  const opencvSIMDthreadsUrl = '../../build/wasm/desktop/opencv.js';
-  const opencvScalarUrl = '../../build/wasm/mobile/opencv.js';
+  const opencvSIMDthreadsUrl = '../../build/wasm/opencv_simd_threads.js';
+  const opencvThreadsUrl = '../../build/wasm/opencv_threads.js';
+  const opencvScalarUrl = '../../build/wasm/opencv_scalar.js';
 
-  this.loadOpenCv = function (onloadCallback, scalar = false) {
+  this.loadOpenCv = function (onloadCallback, wasmType = 'simd-threads') {
     let opencvUrl = opencvSIMDthreadsUrl;
-    if (isMobileDevice() || scalar) opencvUrl = opencvScalarUrl;
+    if (wasmType == 'threads') opencvUrl = opencvThreadsUrl;
+    else if (isMobileDevice() || wasmType == 'scalar')
+      opencvUrl = opencvScalarUrl;
 
     let script = document.createElement('script');
     script.setAttribute('async', '');

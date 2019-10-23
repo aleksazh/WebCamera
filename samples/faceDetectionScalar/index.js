@@ -188,4 +188,4 @@ utils.loadOpenCv(() => {
       initCameraSettingsAndStart();
     });
   });
-}, true);
+}, 'scalar');
