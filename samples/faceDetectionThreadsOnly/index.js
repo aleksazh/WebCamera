@@ -204,4 +204,4 @@ utils.loadOpenCv(() => {
       initCameraSettingsAndStart();
     });
   });
-}, 'threads');
+});

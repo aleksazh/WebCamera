@@ -156,4 +156,4 @@ utils.loadOpenCv(() => {
       initCameraSettingsAndStart();
     });
   });
-});
+}, 'simd-threads');

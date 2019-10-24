@@ -176,4 +176,4 @@ utils.loadOpenCv(() => {
       initCameraSettingsAndStart();
     });
   });
-}, 'threads');
+});
