@@ -148,7 +148,10 @@ function initUI() {
     else threadsNum.value = 1;
     cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
     threadsNum.addEventListener('change', () => {
-      cv.parallel_pthreads_set_threads_num(parseInt(parseInt(threadsNum.value)));
+      if (Number(threadsNum.value) <= Number(threadsNum.max) &&
+        Number(threadsNum.value) >= Number(threadsNum.min)) {
+        cv.parallel_pthreads_set_threads_num(parseInt(parseInt(threadsNum.value)));
+      }
     });
   }
 
@@ -183,14 +186,14 @@ function openTabset() {
 function showMenu() {
   menuVisible = true;
   if (document.getElementById('menuSelector').innerText == menuTypes.hats)
-  carousels[0].classList.remove('hidden');
+    carousels[0].classList.remove('hidden');
   else carousels[1].classList.remove('hidden');
 }
 
 function hideMenu() {
   menuVisible = false;
   if (document.getElementById('menuSelector').innerText == menuTypes.hats)
-  carousels[0].classList.add('hidden');
+    carousels[0].classList.add('hidden');
   else carousels[1].classList.add('hidden');
 }
 

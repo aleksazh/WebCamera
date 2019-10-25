@@ -166,4 +166,4 @@ function cleanupAndStop() {
 utils.loadOpenCv(() => {
   initUI();
   initCameraSettingsAndStart();
-});
+}, 'simd-threads');

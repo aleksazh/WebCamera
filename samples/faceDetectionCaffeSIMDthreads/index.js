@@ -164,7 +164,10 @@ function initUI() {
     else threadsNum.value = 1;
     cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
     threadsNum.addEventListener('change', () => {
-      cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+      if (Number(threadsNum.value) <= Number(threadsNum.max) &&
+        Number(threadsNum.value) >= Number(threadsNum.min)) {
+        cv.parallel_pthreads_set_threads_num(parseInt(parseInt(threadsNum.value)));
+      }
     });
   }
 }
