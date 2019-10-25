@@ -26,20 +26,20 @@ self.addEventListener('message', (event) => {
  */
 self.__precacheManifest = [
   {
-    "url": "build/wasm/desktop/opencv_js.worker.js",
+    "url": "build/wasm/opencv_js.worker.js",
     "revision": "f95a202fe0e8fa623bb12f96ccdd2178"
   },
   {
-    "url": "build/wasm/desktop/opencv.js",
-    "revision": "1f1ec76d2afb0a91ca267610e25d0b0f"
-  },
-  {
-    "url": "build/wasm/mobile/opencv_js.js",
-    "revision": "dde8b81808a09bef12c299d62edf2662"
-  },
-  {
-    "url": "build/wasm/mobile/opencv.js",
+    "url": "build/wasm/opencv_scalar.js",
     "revision": "0d450250f1648b3131eefc06e55aab50"
+  },
+  {
+    "url": "build/wasm/opencv_simd_threads.js",
+    "revision": "c1557ced39d6590849f39de15cadfa14"
+  },
+  {
+    "url": "build/wasm/opencv_threads.js",
+    "revision": "9058cb9de03d54631d5308a732f394be"
   },
   {
     "url": "data/classifiers/haarcascade_eye.xml",
@@ -48,6 +48,138 @@ self.__precacheManifest = [
   {
     "url": "data/classifiers/haarcascade_frontalface_default.xml",
     "revision": "663f963eabf3df6eb215c50ff06bcc22"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/0.png",
+    "revision": "4488e3f40fc71a184e77d5662422f0ad"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/1.png",
+    "revision": "e663a0b248f6fa2b004573e6eec530a6"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/10.png",
+    "revision": "bb39f9233e61acf21fcb7752a5605aeb"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/11.png",
+    "revision": "8afe7b5b67451c853a60cac2574c591f"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/2.png",
+    "revision": "911f8c351103e2db77174c9219bd910a"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/3.png",
+    "revision": "585cbfa0bc573d15dcc2ad1f30ed16d5"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/4.png",
+    "revision": "e41a9583f86f141f2f6ad98be0080577"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/5.png",
+    "revision": "39ea3db3e476bca9f8cb054e6a5ab513"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/6.png",
+    "revision": "c05e3dc0d703b60eceea7cad872bd0d1"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/7.png",
+    "revision": "2c8e84f39a32057de43cc2a2791d6658"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/8.png",
+    "revision": "7bea84f9dbafb4d7ee26019d6cb5a81d"
+  },
+  {
+    "url": "data/funnyHatsResources/glasses/9.png",
+    "revision": "3ee0518cc1d43dab88f2de80ff9fb9f8"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/0.png",
+    "revision": "9176ac5d455027a6c3f9937da7db054e"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/1.png",
+    "revision": "e749c42d9daa8a085e18b3d0069e6c0d"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/10.png",
+    "revision": "00118e88c31a5b2ae29ca7fa4e28673e"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/11.png",
+    "revision": "b751d6e7e640b93bf566d1593a87d2df"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/12.png",
+    "revision": "972811dbb3058a1ed59c467e4fcb27cd"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/13.png",
+    "revision": "2aa433348f1fd6e0b2989a50b3cc35e6"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/14.png",
+    "revision": "3bd5eeba309a5833685912dcffdab595"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/15.png",
+    "revision": "d49238abc8b1a79285a24bb929dd136a"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/16.png",
+    "revision": "d02e8b21b3822006f9566fd53017e3fc"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/17.png",
+    "revision": "1ff6a6030ce67337f8b39dfbf697e9d2"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/18.png",
+    "revision": "f8f6a113658b15b51fb27bac275d4fa2"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/19.png",
+    "revision": "ed7bac73ff98cc34b817a9efd73125a8"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/2.png",
+    "revision": "0a9425dddacf60f8caef79416099c900"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/20.png",
+    "revision": "13bb289361cede296b9e8fdb5ab439c0"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/3.png",
+    "revision": "bbbd290c8279ccb1c4e29ee4467c2828"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/4.png",
+    "revision": "b3a75f3bb23df812c880689e12a722ea"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/5.png",
+    "revision": "667627b9dd1af3b6b22e0bed23ce9143"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/6.png",
+    "revision": "e47f0137a02cfb0e6534f7bcd8bb8000"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/7.png",
+    "revision": "56f3f391f6f6ee75c6a80987d3317839"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/8.png",
+    "revision": "10bec3051452e1d73c73347542886c5d"
+  },
+  {
+    "url": "data/funnyHatsResources/hats/9.png",
+    "revision": "c653beff9c0c00330463f6a677b23651"
   },
   {
     "url": "data/google_icons_font.woff2",
@@ -82,40 +214,8 @@ self.__precacheManifest = [
     "revision": "4ec635f238949ed4778c1b1a2eb0828e"
   },
   {
-    "url": "samples/cardScanner/index.html",
-    "revision": "58827dddfdc8ff6f48d1e4d573e5542f"
-  },
-  {
-    "url": "samples/cardScanner/js/cardProcessing.js",
-    "revision": "3ef137d875542bd97f3c526837fa44e1"
-  },
-  {
-    "url": "samples/cardScanner/js/index.js",
-    "revision": "19703183f2bff8f244eca22d9999e307"
-  },
-  {
-    "url": "samples/cardScanner/resources/card_1.png",
-    "revision": "e95331187dd4845286fb4df611596780"
-  },
-  {
-    "url": "samples/cardScanner/resources/card_2.png",
-    "revision": "dfd6a8175cfa78cfaa78a2c113cfba62"
-  },
-  {
-    "url": "samples/cardScanner/resources/card_3.png",
-    "revision": "8b6acbf31ff1e3919abb8f9bdf356c09"
-  },
-  {
-    "url": "samples/cardScanner/resources/card_5.png",
-    "revision": "632980febaaa34839372d4d898ea96bf"
-  },
-  {
-    "url": "samples/cardScanner/resources/ocr_digits.png",
-    "revision": "3fd91c7e08e68a7615c683741fed38db"
-  },
-  {
     "url": "samples/css/base.css",
-    "revision": "94bfb3785de9d6cf9a518b2d123755ec"
+    "revision": "24686ee05ce888543ccb13194b83fb39"
   },
   {
     "url": "samples/css/camera-bar.css",
@@ -135,227 +235,143 @@ self.__precacheManifest = [
   },
   {
     "url": "samples/css/settings.css",
-    "revision": "190e10486aa5bb56bcbc0a0ab6211d11"
+    "revision": "ea1a979157604659a8042905db6f138a"
   },
   {
     "url": "samples/css/style.css",
     "revision": "3d2168dc810bb2435b0ece19389ac1f8"
   },
   {
-    "url": "samples/docScanner/index.html",
-    "revision": "8db980b677d4f90b539330b0afcc4714"
+    "url": "samples/faceDetectionCaffeScalar/index.html",
+    "revision": "39c97232e80427ea06428b2d88044473"
   },
   {
-    "url": "samples/docScanner/js/docProcessing.js",
-    "revision": "c004aa5ae43b8ab7f273c9ad60546055"
+    "url": "samples/faceDetectionCaffeScalar/index.js",
+    "revision": "22c61eec12feb088f399e1f464c27452"
   },
   {
-    "url": "samples/docScanner/js/index.js",
-    "revision": "204e08dc253651f3a2676a30eace6288"
+    "url": "samples/faceDetectionCaffeSIMDthreads/index.html",
+    "revision": "5d82babb6769cad33de0b62133522766"
   },
   {
-    "url": "samples/exposureTime/index.html",
-    "revision": "810978699d2d986a5f4dc61b7cae9bec"
+    "url": "samples/faceDetectionCaffeSIMDthreads/index.js",
+    "revision": "eb1aab1c49d7b1289a98e660157e74e7"
   },
   {
-    "url": "samples/faceDetection/index.html",
-    "revision": "5606908a9e654c9761aee78515dbe74a"
+    "url": "samples/faceDetectionCaffeThreadsOnly/index.html",
+    "revision": "5d82babb6769cad33de0b62133522766"
   },
   {
-    "url": "samples/faceDetection/index.js",
-    "revision": "96994b2981767ea5a88ce3182740dceb"
+    "url": "samples/faceDetectionCaffeThreadsOnly/index.js",
+    "revision": "1b9282131650ca710364813effc5f607"
   },
   {
-    "url": "samples/filters/index.html",
-    "revision": "a8c7521e82c31d4eaedeeb1b4becd3c6"
+    "url": "samples/faceDetectionScalar/index.html",
+    "revision": "84c322b046ef73c5ffe1103b3fe51603"
   },
   {
-    "url": "samples/filters/js/filters.js",
+    "url": "samples/faceDetectionScalar/index.js",
+    "revision": "bd247532c8c614dece53e06f25f983df"
+  },
+  {
+    "url": "samples/faceDetectionThreadsOnly/index.html",
+    "revision": "1fca93e0bd49a95bb7980f536b490cd5"
+  },
+  {
+    "url": "samples/faceDetectionThreadsOnly/index.js",
+    "revision": "e0fa9301e34b49984d6d0e335f96b049"
+  },
+  {
+    "url": "samples/filtersScalar/index.html",
+    "revision": "e6fd3187903cc5cd1a8df61ec177d325"
+  },
+  {
+    "url": "samples/filtersScalar/js/filters.js",
     "revision": "8d4868bd2ff0e69231f54c4b02e89f6c"
   },
   {
-    "url": "samples/filters/js/index.js",
-    "revision": "22d4ac0e4eddf0b65ebb37bb8964e974"
+    "url": "samples/filtersScalar/js/index.js",
+    "revision": "bef578d64bdf78b744580ce68961cacf"
   },
   {
-    "url": "samples/filters/js/ui.js",
-    "revision": "8d1b3d57758d31b4605fc22322b3f651"
+    "url": "samples/filtersScalar/js/ui.js",
+    "revision": "748df26eb64ad421a4aa0aafa64ad7e3"
   },
   {
-    "url": "samples/focusDistance/index.html",
-    "revision": "810978699d2d986a5f4dc61b7cae9bec"
+    "url": "samples/filtersSIMDthreads/index.html",
+    "revision": "68e3bc39a29ce3716a3d6135fdb58f9f"
   },
   {
-    "url": "samples/funnyHats/css/tabs.css",
+    "url": "samples/filtersSIMDthreads/js/filters.js",
+    "revision": "8d4868bd2ff0e69231f54c4b02e89f6c"
+  },
+  {
+    "url": "samples/filtersSIMDthreads/js/index.js",
+    "revision": "fc63b9b775b12cfc1badfff31bc4f875"
+  },
+  {
+    "url": "samples/filtersSIMDthreads/js/ui.js",
+    "revision": "4c12b670cb631029be6252c8cf6b793f"
+  },
+  {
+    "url": "samples/filtersThreadsOnly/index.html",
+    "revision": "68e3bc39a29ce3716a3d6135fdb58f9f"
+  },
+  {
+    "url": "samples/filtersThreadsOnly/js/filters.js",
+    "revision": "8d4868bd2ff0e69231f54c4b02e89f6c"
+  },
+  {
+    "url": "samples/filtersThreadsOnly/js/index.js",
+    "revision": "9b3121cb4abae79035243e3e756522d5"
+  },
+  {
+    "url": "samples/filtersThreadsOnly/js/ui.js",
+    "revision": "4c12b670cb631029be6252c8cf6b793f"
+  },
+  {
+    "url": "samples/funnyHatsScalar/css/tabs.css",
     "revision": "0a5518f764e366770a1f1b848cb97957"
   },
   {
-    "url": "samples/funnyHats/index.html",
-    "revision": "814ca6774984f50c052757d75b5501b7"
+    "url": "samples/funnyHatsScalar/index.html",
+    "revision": "b7d605e4a37505a5cbef927ea822f10d"
   },
   {
-    "url": "samples/funnyHats/js/hatsAndGlassesProcessing.js",
+    "url": "samples/funnyHatsScalar/js/hatsAndGlassesProcessing.js",
     "revision": "4ea01496366956be2499e17534dda220"
   },
   {
-    "url": "samples/funnyHats/js/index.js",
-    "revision": "a0efa3b6bb2ce1e151d9f79af2eb06ef"
+    "url": "samples/funnyHatsScalar/js/index.js",
+    "revision": "85646272186c9513d79f5edb9646780a"
   },
   {
-    "url": "samples/funnyHats/js/ui.js",
-    "revision": "5c00683a4b45007ed9ae927748b64e25"
+    "url": "samples/funnyHatsScalar/js/ui.js",
+    "revision": "3575334a059f225108509c2c1fed139a"
   },
   {
-    "url": "samples/funnyHats/resources/glasses/0.png",
-    "revision": "4488e3f40fc71a184e77d5662422f0ad"
+    "url": "samples/funnyHatsThreadsOnly/css/tabs.css",
+    "revision": "0a5518f764e366770a1f1b848cb97957"
   },
   {
-    "url": "samples/funnyHats/resources/glasses/1.png",
-    "revision": "e663a0b248f6fa2b004573e6eec530a6"
+    "url": "samples/funnyHatsThreadsOnly/index.html",
+    "revision": "00fdfb335701815b90f992ec2ce4b8d2"
   },
   {
-    "url": "samples/funnyHats/resources/glasses/10.png",
-    "revision": "bb39f9233e61acf21fcb7752a5605aeb"
+    "url": "samples/funnyHatsThreadsOnly/js/hatsAndGlassesProcessing.js",
+    "revision": "4ea01496366956be2499e17534dda220"
   },
   {
-    "url": "samples/funnyHats/resources/glasses/11.png",
-    "revision": "8afe7b5b67451c853a60cac2574c591f"
+    "url": "samples/funnyHatsThreadsOnly/js/index.js",
+    "revision": "633820b0885a9f1c5a5a0c17b88be01b"
   },
   {
-    "url": "samples/funnyHats/resources/glasses/2.png",
-    "revision": "911f8c351103e2db77174c9219bd910a"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/3.png",
-    "revision": "585cbfa0bc573d15dcc2ad1f30ed16d5"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/4.png",
-    "revision": "e41a9583f86f141f2f6ad98be0080577"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/5.png",
-    "revision": "39ea3db3e476bca9f8cb054e6a5ab513"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/6.png",
-    "revision": "c05e3dc0d703b60eceea7cad872bd0d1"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/7.png",
-    "revision": "2c8e84f39a32057de43cc2a2791d6658"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/8.png",
-    "revision": "7bea84f9dbafb4d7ee26019d6cb5a81d"
-  },
-  {
-    "url": "samples/funnyHats/resources/glasses/9.png",
-    "revision": "3ee0518cc1d43dab88f2de80ff9fb9f8"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/0.png",
-    "revision": "9176ac5d455027a6c3f9937da7db054e"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/1.png",
-    "revision": "e749c42d9daa8a085e18b3d0069e6c0d"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/10.png",
-    "revision": "00118e88c31a5b2ae29ca7fa4e28673e"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/11.png",
-    "revision": "b751d6e7e640b93bf566d1593a87d2df"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/12.png",
-    "revision": "972811dbb3058a1ed59c467e4fcb27cd"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/13.png",
-    "revision": "2aa433348f1fd6e0b2989a50b3cc35e6"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/14.png",
-    "revision": "3bd5eeba309a5833685912dcffdab595"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/15.png",
-    "revision": "d49238abc8b1a79285a24bb929dd136a"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/16.png",
-    "revision": "d02e8b21b3822006f9566fd53017e3fc"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/17.png",
-    "revision": "1ff6a6030ce67337f8b39dfbf697e9d2"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/18.png",
-    "revision": "f8f6a113658b15b51fb27bac275d4fa2"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/19.png",
-    "revision": "ed7bac73ff98cc34b817a9efd73125a8"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/2.png",
-    "revision": "0a9425dddacf60f8caef79416099c900"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/20.png",
-    "revision": "13bb289361cede296b9e8fdb5ab439c0"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/3.png",
-    "revision": "bbbd290c8279ccb1c4e29ee4467c2828"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/4.png",
-    "revision": "b3a75f3bb23df812c880689e12a722ea"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/5.png",
-    "revision": "667627b9dd1af3b6b22e0bed23ce9143"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/6.png",
-    "revision": "e47f0137a02cfb0e6534f7bcd8bb8000"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/7.png",
-    "revision": "56f3f391f6f6ee75c6a80987d3317839"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/8.png",
-    "revision": "10bec3051452e1d73c73347542886c5d"
-  },
-  {
-    "url": "samples/funnyHats/resources/hats/9.png",
-    "revision": "c653beff9c0c00330463f6a677b23651"
-  },
-  {
-    "url": "samples/hdr/index-wasm.html",
-    "revision": "7d49526ae1de32dc0eac32cf93ebe674"
-  },
-  {
-    "url": "samples/hdr/index.html",
-    "revision": "932bfa1e18a4a848fbf977cb9e67e7b2"
-  },
-  {
-    "url": "samples/hdr/js/index.js",
-    "revision": "fbf73df0036700b735f3b663d86bc2b2"
+    "url": "samples/funnyHatsThreadsOnly/js/ui.js",
+    "revision": "1150ef870a5dd4b59306c5e95909d3f4"
   },
   {
     "url": "samples/index.html",
-    "revision": "e66db9713c364c0beec49701bdbd27da"
-  },
-  {
-    "url": "samples/panTilt/index.html",
-    "revision": "f8ed3e51cad82b5ecb3dc98524efa6e1"
+    "revision": "522e7d05a20cdb2c2c5a5207679fab5a"
   },
   {
     "url": "utils/menu.js",
@@ -367,7 +383,7 @@ self.__precacheManifest = [
   },
   {
     "url": "utils/utils.js",
-    "revision": "9232d3ca9cd45dae151ca7cac4de7e4e"
+    "revision": "fe30e62f3d68635148f15cb0a0b615bd"
   },
   {
     "url": "workbox-config.js",
