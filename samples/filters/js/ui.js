@@ -11,7 +11,7 @@ const filters = {
   'adaptiveThreshold': 'Adaptive Thresholding',
   'gaussianBlur': 'Gaussian Blurring',
   'medianBlur': 'Median Blurring',
-  'bilateralFilter': 'Bilateral Filtering',
+  //'bilateralFilter': 'Bilateral Filtering',
   'sobel': 'Sobel Derivatives',
   'scharr': 'Scharr Derivatives',
   'laplacian': 'Laplacian Derivatives',

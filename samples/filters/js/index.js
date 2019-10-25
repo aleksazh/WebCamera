@@ -92,7 +92,7 @@ function applyCurrentFilter() {
     case 'threshold': return threshold(src, dstC4);
     case 'adaptiveThreshold': return adaptiveThreshold(src, dstC1);
     case 'gaussianBlur': return gaussianBlur(src, dstC4);
-    case 'bilateralFilter': return bilateralFilter(src, dstC3);
+    //case 'bilateralFilter': return bilateralFilter(src, dstC3);
     case 'medianBlur': return medianBlur(src, dstC4);
     case 'sobel': return sobel(src, dstC1);
     case 'scharr': return scharr(src, dstC1);
@@ -131,13 +131,12 @@ function processVideo() {
   cv.imshow('adaptiveThresholdCanvas',
     adaptiveThreshold(srcSmall, dstC1Small));
   cv.imshow('gaussianBlurCanvas', gaussianBlur(srcSmall, dstC4Small));
-  cv.imshow('bilateralFilterCanvas',
-    bilateralFilter(srcSmall, dstC3Small));
+  //cv.imshow('bilateralFilterCanvas',
+  //  bilateralFilter(srcSmall, dstC3Small));
   cv.imshow('medianBlurCanvas', medianBlur(srcSmall, dstC4Small));
   cv.imshow('sobelCanvas', sobel(srcSmall, dstC1Small));
   cv.imshow('scharrCanvas', scharr(srcSmall, dstC1Small));
-  cv.imshow('laplacianCanvas',
-    laplacian(srcSmall, dstC1Small));
+  cv.imshow('laplacianCanvas', laplacian(srcSmall, dstC1Small));
   cv.imshow('calcHistCanvas', calcHist(srcSmall, dstC1Small, dstC4Small));
   cv.imshow('equalizeHistCanvas', equalizeHist(srcSmall, dstC1Small));
   cv.imshow('backprojectionCanvas',
