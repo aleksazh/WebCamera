@@ -19,7 +19,7 @@ let downscaleLevel = 1;
 // #menuSelector switches between these types of menu.
 const menuTypes = { hats: '🎩', glasses: '🕶️' };
 
-const resourcesPath = 'resources/';
+const resourcesPath = '../../data/funnyHatsResources/';
 const virtualObjects = ['hats', 'glasses'];
 const hatsData = [
   { file: '0', name: "Pirate hat", scale: 1.3, yOffsetDown: 0.25 },
