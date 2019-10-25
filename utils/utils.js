@@ -13,6 +13,7 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   const opencvScalarUrl = '../../build/wasm/opencv_scalar.js';
 
   this.loadOpenCv = function (onloadCallback, wasmType = 'threads') {
+    // 'Threads only' wasm is by default.
     let opencvUrl = opencvThreadsUrl;
     if (wasmType == 'simd-threads') opencvUrl = opencvSIMDthreadsUrl;
     else if (isMobileDevice() || wasmType == 'scalar')
