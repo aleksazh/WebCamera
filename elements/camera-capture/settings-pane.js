@@ -17,7 +17,7 @@ class SettingsPane extends LitElement {
     mwc-icon-button {
       color: white;
       --mdc-theme-text-disabled-on-light: gray;
-      //background-color: rgba(0, 0, 0, 0.1);
+      background-color: rgba(0, 0, 0, 0.05);
       border-radius: 50%;
     }
 
@@ -60,7 +60,7 @@ class SettingsPane extends LitElement {
     }
 
     #resetButton {
-      position: fixed;
+      position: absolute;
       top: 0px;
       right: 0px;
       padding: 16px;
@@ -104,14 +104,7 @@ class SettingsPane extends LitElement {
     await this.updateComplete;
 
     const capabilities = videoTrack.getCapabilities();
-
-    // Boolean abilitites
-    ['torch'].forEach(id => {
-      if (!capabilities[id]) {
-        const control = this.shadowRoot.querySelector(`#${id}`);
-        control.disabled = true;
-      }
-    });
+    const videoSettings = videoTrack.getSettings();
 
     // Range abilities
     ['iso', 'exposureTime', 'focusDistance', 'colorTemperature', 'zoom',
@@ -124,8 +117,19 @@ class SettingsPane extends LitElement {
         control.step = step;
         control.max = max;
         control.min = min;
+        control.value = videoSettings[id];
+        control.disabled = false;
       } else {
         console.log(id, 'is not supported.');
+        control.disabled = true;
+      }
+    });
+
+    // Boolean abilitites
+    ['torch'].forEach(id => {
+      if (!capabilities[id]) {
+        console.log(id, 'is not supported.');
+        const control = this.shadowRoot.querySelector(`#${id}`);
         control.disabled = true;
       }
     });
@@ -225,13 +229,13 @@ class SettingsPane extends LitElement {
     const groups = this.shadowRoot.querySelectorAll('.settings-group');
     for (let group of groups) {
       for (let slider of group.children) {
+
         slider.onchange = e => {
           const id = e.target.getAttribute('id');
           const value = e.detail.value;
-          console.log(id, ":", value);
+          //console.log(id, ":", value);
 
           let constraints = { advanced: [{}] };
-          constraints.advanced[0][id] = value;
           if (id == 'exposureTime') {
             constraints.advanced[0]['exposureMode'] = 'manual';
           } else if (id == 'focusDistance') {
@@ -240,6 +244,7 @@ class SettingsPane extends LitElement {
             this._colorTemperatureChange(value);
             constraints.advanced[0]['whiteBalanceMode'] = 'manual';
           }
+          constraints.advanced[0][id] = value;
 
           group.setAttribute("modified", "");
 
@@ -258,26 +263,28 @@ class SettingsPane extends LitElement {
 
     this.activePane.removeAttribute("modified");
 
-    if (id == 'standardSettings') {
+    if (id == 'standard-group') {
       Array.from(this.activePane.children).forEach(child => {
         child.value = (child.max - child.min) / 2 + Number(child.min);
         if (!child.disabled) {
-          constraints.advanced[0][id] = child.value;
+          constraints.advanced[0][child.id] = child.value;
         }
       });
-    } else if (id == 'exposureTimeSettings') {
+    } else if (id == 'exposureTime-group') {
       constraints.advanced[0]['exposureMode'] = 'continuous';
-      this.activePane.children[0].value = 0;
-    } else if (id == 'focusDistanceSettings') {
-      constraints.advanced[0]['focusMode'] = 'continuous';
-      this.activePane.children[0].value = 0;
-    } else if (id == 'colorTemperatureSettings') {
+      this.activePane.children[0].value = this.activePane.children[0].min;
+    } else if (id == 'focusDistance-group') {
+      constraints.advanced[0]['focusMode'] = 'manual';
+      this.activePane.children[0].value =
+        constraints.advanced[0]['focusDistance'] =
+        this.activePane.children[0].min;
+    } else if (id == 'colorTemperature-group') {
       constraints.advanced[0]['whiteBalanceMode'] = 'continuous';
-      this.activePane.children[0].value = 0;
+      this.activePane.children[0].value = this.activePane.children[0].min;
       this._colorTemperatureChange(0);
-    } else if (id == 'zoomSettings') {
-      constraints.advanced[0]['zoom'] = 1;
-      this.activePane.children[0].value = 1;
+    } else if (id == 'zoom-group') {
+      constraints.advanced[0]['zoom'] = this.activePane.children[0].value =
+        this.activePane.children[0].min;
     }
 
     // The handler of 'constrainstchange' should call applyFromTrack after applying
@@ -287,7 +294,7 @@ class SettingsPane extends LitElement {
 
   render() {
     return html`
-      <link href="../css/google-icons.css" rel="stylesheet">
+      <link href="../../samples/css/google-icons.css" rel="stylesheet">
       <button id="resetButton" class='hidden' @click=${this._onResetClicked}>
         Reset
       </button>

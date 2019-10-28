@@ -33,7 +33,7 @@ Implementation information for other properties can be found in [here](https://g
 To get the development dependencies (like local dev server) and project
 dependencies like the Material web components, please run
 
-`npm run install`
+`npm install`
 
 This demo requires some web components (elements) from the elements/
 folder.

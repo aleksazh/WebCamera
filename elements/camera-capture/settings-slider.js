@@ -32,19 +32,19 @@ class SettingsSlider extends LitElement {
   `;
 
   static get properties() {
-    return { 
+    return {
       label: { type: String },
-      value: { type: Number, reflect: true },
-      min: { type: Number },
       max: { type: Number },
+      min: { type: Number },
       step: { type: Number },
+      value: { type: Number, reflect: true },
       disabled: { type: Boolean }
     };
   }
 
   _onchange(e) {
     this.value = e.detail.value;
-    console.log(this.value);
+    //console.log(this.value);
     this.dispatchEvent(new CustomEvent('change', { detail: {value: this.value} }));
   }
 
@@ -54,16 +54,16 @@ class SettingsSlider extends LitElement {
 
   render() {
     return html`
-      <div class=${classMap({ title: true, disabled: this.disabled})}>${this.label}:</div>
+      <div class=${classMap({ title: true, disabled: this.disabled})}>${this.label}</div>
       <mwc-slider id="slider" discrete markers ?disabled=${this.disabled}
-        value=${this.value || 0}
+        max=${this.max || 0}
         min=${this.min || 0}
-        max=${this.max || 10}
-        step=${this.step || 1}
+        step=${this.step || 0}
+        value=${this.value || 0}
         @MDCSlider:input=${this._onchange}>
       </mwc-slider>
       <div class=${classMap({ value: true, disabled: this.disabled})}>
-        ${this.value}
+        ${this.value || 0}
         <slot></slot>
       </div>
     `;

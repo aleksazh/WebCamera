@@ -48,6 +48,7 @@ class CameraCapture extends LitElement {
 
     #cameraBar {
       height: 100px;
+      width:100%;
       background-color: transparent;
       display: flex;
       flex-direction: row;
@@ -79,7 +80,7 @@ class CameraCapture extends LitElement {
       border: 2px solid white;
       border-radius: 52px;
       color: white;
-      background-color: transparent;
+      background-color: rgba(0, 0, 0, 0.05);
     }
   `;
 
@@ -89,8 +90,8 @@ class CameraCapture extends LitElement {
     try {
       await this.videoTrack.applyConstraints(e.detail.constraints);
 
-      const settings = this.shadowRoot.querySelector('settings-pane');
-      settings.applyFromTrack(this.videoTrack);
+      //const settings = this.shadowRoot.querySelector('settings-pane');
+      //settings.applyFromTrack(this.videoTrack);
     } catch(err) {
       console.error(err);
     }
@@ -104,14 +105,23 @@ class CameraCapture extends LitElement {
   async _onFacingModeClicked() {
     this.selectedCamera = (this.selectedCamera + 1) % this.cameras.length;
     const camera = this.cameras[this.selectedCamera];
-    this.constraints.deviceId = { exact: camera.deviceId };
     this.facingMode = this.getFacingMode(camera);
-    this.requestUpdate();
+    this.constraints.deviceId = { exact: camera.deviceId };
+    console.log("Camera:", this.cameras[0].label, ".");
+    //this.requestUpdate();
+
+    let mainContent = this.shadowRoot.getElementById('mainContent');
+    mainContent.classList.add('hidden');
 
     this.stopCamera();
 
     const videoElement = this.shadowRoot.querySelector('video');
     await this.startCamera(videoElement, this.constraints);
+
+    mainContent.style.width = `${videoElement.videoWidth}px`;
+    this.shadowRoot.querySelector('.canvas-wrapper').style.height =
+      `${videoElement.videoHeight}px`;
+    mainContent.classList.remove('hidden');
 
     // Timeout needed in Chrome, see https://crbug.com/711524.
     const settings = this.shadowRoot.querySelector('settings-pane');
@@ -129,9 +139,11 @@ class CameraCapture extends LitElement {
       const canvas = this.shadowRoot.querySelector('#gallery');
       canvas.width = getComputedStyle(canvas).width.split('px')[0];
       canvas.height = getComputedStyle(canvas).height.split('px')[0];
+
       let ratio = Math.max(canvas.width / img.width, canvas.height / img.height);
       let x = (canvas.width - img.width * ratio) / 2;
       let y = (canvas.height - img.height * ratio) / 2;
+
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
         x, y, img.width * ratio, img.height * ratio);
@@ -150,6 +162,8 @@ class CameraCapture extends LitElement {
 
         this.video = target;
         this.stream = stream;
+        this.videoTrack = stream.getVideoTracks()[0];
+        this.imageCapturer = new ImageCapture(this.videoTrack);
 
         target.srcObject = stream;
         target.addEventListener('canplay', resolve, { once: true });
@@ -201,11 +215,11 @@ class CameraCapture extends LitElement {
     // Android bug, doesn't work with DevTools emulation.
     if (navigator.userAgent.includes("Android") &&
       screen.orientation.type.includes("portrait")) {
-      this.constraints.width = Math.ceil(visualViewport.height);
-      this.constraints.height = Math.ceil(visualViewport.width);
+      this.constraints.width = { ideal: Math.ceil(visualViewport.height) };
+      this.constraints.height = { ideal: Math.ceil(visualViewport.width) };
     } else {
-      this.constraints.width = Math.ceil(visualViewport.width);
-      this.constraints.height = Math.ceil(visualViewport.height);
+      this.constraints.width = { ideal: Math.ceil(visualViewport.width) };
+      this.constraints.height = { ideal: Math.ceil(visualViewport.height) };
     }
 
     // Disable facingModeButton if there is no environment or user mode.
@@ -220,23 +234,17 @@ class CameraCapture extends LitElement {
     this.facingMode = this.getFacingMode(this.cameras[0]);
     this.requestUpdate();
     this.constraints.deviceId = { exact: this.cameras[0].deviceId};
+    console.log("Camera:", this.cameras[0].label, ".");
 
     const videoElement = this.shadowRoot.querySelector('video');
-
     await this.startCamera(videoElement, this.constraints);
 
-    this.videoTrack = videoElement.srcObject.getVideoTracks()[0];
-    this.imageCapturer = new ImageCapture(this.videoTrack);
-
-    let cameraBar = this.shadowRoot.querySelector('#cameraBar');
-    cameraBar.style.width = `${videoElement.videoWidth}px`;
+    this.shadowRoot.querySelector('.canvas-wrapper').style.height =
+      `${videoElement.videoHeight}px`;
 
     let mainContent = this.shadowRoot.getElementById('mainContent');
     mainContent.style.width = `${videoElement.videoWidth}px`;
     mainContent.classList.remove('hidden');
-
-    this.shadowRoot.querySelector('.canvas-wrapper').style.height =
-      `${videoElement.videoHeight}px`;
 
     this.shadowRoot.getElementById('takePhotoButton').disabled = false;
 
