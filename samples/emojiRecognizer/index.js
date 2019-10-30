@@ -7,31 +7,26 @@ let videoTrack = null;
 
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
-let canvasOutputCtx = null;
 let canvasInput = null;
 let canvasInputCtx = null;
 
 let src = null;
 let gray = null;
-let eyeVec = null;
 let faceVec = null;
 let faceCascade = null;
-let eyeCascade = null;
+let emotionNet = null;
 
 const faceModelPath = 'haarcascade_frontalface_default.xml';
 const faceModelUrl = '../../data/classifiers/haarcascade_frontalface_default.xml';
-const emojiModelPath = 'emotion_detection_model.xml';
-const emojiModelUrl = '../../data/classifiers/emotion_detection_model.xml';
+const emojiModelPath = 'emotion_recognizer.onnx';
+const emojiModelUrl = '../../data/classifiers/emotion_recognizer.onnx';
 
 let emoticons = [];
-const emotions = ['neutral', 'anger', 'disgust', 'happy', 'sadness', 'surprise'];
+const emotions = ['neutral', 'happiness', 'surprise', 'sadness', 'anger', 'disgust', 'fear', 'contempt'];
 
-const faceColor = [0, 255, 255, 255];
-const eyesColor = [0, 0, 255, 255];
+let nImagesLoaded = 0;
+const N_IMAGES = emotions.length;
 
-// In face and eyes detection, downscaleLevel parameter is used
-// to downscale resolution of input stream and insrease speed of detection.
-let downscaleLevel = 1;
 
 function initOpencvObjects() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
@@ -42,19 +37,15 @@ function initOpencvObjects() {
   // TODO(sasha): Use Web Workers to load files.
   faceCascade.load(faceModelPath);
 
-  //eyeVec = new cv.RectVector();
-  //eyeCascade = new cv.CascadeClassifier();
-  //eyeCascade.load(emojiModelPath);
   emotions.forEach(emotion => {
     let emoticonImg = createImgNode(emotion + '-emoticon');
 
     emoticonImg.onload = function () {
-      emoticons.push(cv.imread(emoticonImg));
-      // Now we can do something with emoji image.
-
+      ++nImagesLoaded;
     };
     emoticonImg.src = '../../data/emoticons/' + emotion + '.png';
   });
+  emotionNet = cv.readNetFromONNX(emojiModelPath);
 }
 
 function createImgNode(id) {
@@ -68,7 +59,11 @@ function createImgNode(id) {
 function deleteOpencvObjects() {
   src.delete(); gray.delete();
   faceVec.delete(); faceCascade.delete();
-  //eyeVec.delete(); eyeCascade.delete();
+
+  emoticons.forEach(emoticon => {
+    emoticon.src.delete();
+    emoticon.mask.delete();
+  });
 }
 
 function completeStyling() {
@@ -85,7 +80,26 @@ function completeStyling() {
 
   canvasOutput.width = video.width;
   canvasOutput.height = video.height;
-  canvasOutputCtx = canvasOutput.getContext('2d');
+}
+
+function waitForResources() {
+  if (nImagesLoaded == N_IMAGES) {
+    emotions.forEach(emotion => {
+      let emoticonImg = document.getElementById(emotion + '-emoticon');
+      let rgbaVector = new cv.MatVector();
+      let emoticon = {};
+      emoticon.src = cv.imread(emoticonImg);
+      cv.split(emoticon.src, rgbaVector); // Create mask from alpha channel.
+      emoticon.mask = rgbaVector.get(3);
+      emoticon.name = emotion;
+      emoticons.push(emoticon);
+      rgbaVector.delete();
+    });
+
+    requestAnimationFrame(processVideo);
+    return;
+  }
+  setTimeout(waitForResources, 50);
 }
 
 function processVideo() {
@@ -102,30 +116,34 @@ function processVideo() {
     src.data.set(imageData.data);
 
     // Detect faces.
-    // cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-    // for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(gray, gray);
-    // let matSize = gray.size();
-    // faceCascade.detectMultiScale(gray, faceVec);
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    faceCascade.detectMultiScale(gray, faceVec);
 
-    // for (let i = 0; i < faceVec.size(); ++i) {
-    //   let face = faceVec.get(i);
-    //   // Draw face.
-    //   faces.push(face);
+    for (let i = 0; i < faceVec.size(); ++i) {
+      let face = faceVec.get(i);
+      // Recognize emotion.
 
-    //   // Detect eyes in face ROI.
-    //   let faceGray = gray.roi(face);
-    //   eyeCascade.detectMultiScale(faceGray, eyeVec);
+      // Detect eyes in face ROI.
+      let faceGray = gray.roi(face);
+      //cv.resize(faceGray, faceGray, new cv.Size(64, 64));
+      let blob = cv.blobFromImage(faceGray, 1.0, new cv.Size(64, 64));
+      emotionNet.setInput(blob);
+      let predictions = emotionNet.forward();
+      let index = predictions.data32F.indexOf(Math.max(...predictions.data32F));
+      let emoticon = emoticons[index];
+      let newEmoticonSize = new cv.Size(face.width, face.height);
+      let resizedEmoticon = new cv.Mat();
+      let resizedMask = new cv.Mat();
+      cv.resize(emoticon.src, resizedEmoticon, newEmoticonSize);
+      cv.resize(emoticon.mask, resizedMask, newEmoticonSize);
+      resizedEmoticon.copyTo(src
+        .rowRange(face.y, face.y + face.height)
+        .colRange(face.x, face.x + face.width),
+        resizedMask);
 
-    //   for (let j = 0; j < eyeVec.size() && j < 2; ++j) {
-    //     // Draw eye.
-    //     let eye = eyeVec.get(j);
-    //     eyes.push(new cv.Rect(face.x + eye.x, face.y + eye.y, eye.width, eye.height));
-    //   }
-    //   faceGray.delete();
-    // }
-    canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
-    //drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
-    //drawResults(canvasOutputCtx, eyes, '#00FFFF', matSize); // Turquoise color.
+      faceGray.delete();
+    }
+    cv.imshow(canvasOutput, src);
 
     stats.end();
     requestAnimationFrame(processVideo);
@@ -134,25 +152,25 @@ function processVideo() {
   }
 };
 
-function drawResults(ctx, results, color, size) {
-  for (let i = 0; i < results.length; ++i) {
-    let rect = results[i];
-    let xRatio = video.width / size.width;
-    let yRatio = video.height / size.height;
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = color;
-    ctx.strokeRect(rect.x * xRatio, rect.y * yRatio, rect.width * xRatio, rect.height * yRatio);
-  }
-}
-
 function startCamera() {
   if (!streaming) {
     utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+    utils.startCamera(videoConstraint, 'videoInput', onVideoStartedCustom);
   } else {
     utils.stopCamera();
     onVideoStopped();
   }
+}
+
+function onVideoStartedCustom() {
+  streaming = true;
+  setMainCanvasProperties(video);
+  videoTrack = video.srcObject.getVideoTracks()[0];
+  imageCapturer = new ImageCapture(videoTrack);
+  document.getElementById('mainContent').classList.remove('hidden');
+  completeStyling();
+  initOpencvObjects();
+  requestAnimationFrame(waitForResources);
 }
 
 function cleanupAndStop() {
@@ -208,16 +226,6 @@ function initUI() {
       cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
     });
   }
-
-  // Event listener for dowscale parameter.
-  let downscaleLevelInput = document.getElementById('downscaleLevel');
-  let downscaleLevelOutput = document.getElementById('downscaleLevelOutput');
-  downscaleLevelInput.addEventListener('input', function () {
-    downscaleLevel = downscaleLevelOutput.value = parseInt(downscaleLevelInput.value);
-  });
-  downscaleLevelInput.addEventListener('change', function () {
-    downscaleLevel = downscaleLevelOutput.value = parseInt(downscaleLevelInput.value);
-  });
 }
 
 utils.loadOpenCv(() => {
