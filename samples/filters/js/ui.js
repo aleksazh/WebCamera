@@ -121,7 +121,7 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  //enableThreads();
+  enableThreads();
 }
 
 function setFilter(filter) {
