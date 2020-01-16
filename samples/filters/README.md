@@ -50,13 +50,6 @@ cv.GaussianBlur(src, dstC4,
 cv.medianBlur(src, dstC4, medianBlurSize);
 ```
 
-* Bilateral Filtering
-```javascript
-cv.cvtColor(src, mat, cv.COLOR_RGBA2RGB);
-cv.bilateralFilter(mat, dstC3, bilateralFilterDiameter, bilateralFilterSigma,
-    bilateralFilterSigma, cv.BORDER_DEFAULT);
-```
-
 
 **4. Morphological Transformations**
 

@@ -56,13 +56,6 @@
               <output id="laplacianKernelSizeOutput"></output>
               <input type="range" id="laplacianKernelSize" value="3" min="1" max="15" step="2"></label>
           </div>
-          <div id="bilateralFilterSettings" class="settings hidden"><label for="bilateralDiameter">Diameter:
-              <output id="bilateralDiameterOutput"></output>
-              <input type="range" id="bilateralDiameter" value="5" min="1" max="15" step="1"></label>
-            <label for="bilateralSigma">Sigma:
-              <output id="bilateralSigmaOutput"></output>
-              <input type="range" id="bilateralSigma" value="75" min="1" max="255" step="1"></label>
-          </div>
           <div id="morphologySettings" class="settings hidden"><label for="morphologyOperation">Operation:
               <select id="morphologyOperation">
                 <option value="MORPH_ERODE">MORPH_ERODE</option>
@@ -139,10 +132,6 @@
           <div class="card">
             <label id="medianBlur">Median Blurring</label>
             <canvas id="medianBlurCanvas" class="small-canvas"></canvas>
-          </div>
-          <div class="card">
-            <label id="bilateralFilter">Bilateral Filtering</label>
-            <canvas id="bilateralFilterCanvas" class="small-canvas"></canvas>
           </div>
           <div class="card">
             <label id="morphology">Morphology</label>
