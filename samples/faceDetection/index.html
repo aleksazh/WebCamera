@@ -12,12 +12,13 @@
 </head>
 
 <body>
-  <div class="opencv-type centered" id="opencvTypeWrapper">
-    <label for="downscaleLevel">Choose opencv.js type: &nbsp;</label>
-    <select id="opencvType">
-      <option disabled selected value> -- select an option -- </option>
+  <div class="opencv-type centered">
+    <label id="openCVtypeStatus">Choose opencv.js type: &nbsp;</label>
+    <select id="openCVtypeSelectTag">
+      <option disabled selected value="select"> -- select an option -- </option>
       <option value="threads">Threads WASM</option>
       <option value="simd-threads">SIMD+threads WASM</option>
+      <option value="simd">SIMD WASM</option>
       <option value="not-optimized">Not optimized WASM</option>
       <option value="asm">ASM</option>
     </select>
@@ -65,7 +66,7 @@
         <input type="range" id="downscaleLevel" value="1" min="0" max="4" step="1">
     </div>
 
-    <p id="opencvTypeLabel"></p>
+    <p id="openCVtypeLabel"></p>
   </div>
 
   <video id="videoInput" class="hidden"></video>

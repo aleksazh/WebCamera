@@ -189,11 +189,25 @@ function cleanupAndStop() {
   utils.stopCamera(); onVideoStopped();
 }
 
-utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
-      initUI();
-      initCameraSettingsAndStart();
+function loadOpenCVandStart() {
+  utils.loadOpenCv(() => {
+    utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+      utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+        document.getElementsByClassName("opencv-type")[0].remove();
+        initUI();
+        initCameraSettingsAndStart();
+      });
     });
   });
-});
+}
+
+if (isMobileDevice()) {
+  document.getElementById("openCVtypeStatus").innerText = "Loading not optimized WASM ...";
+  document.getElementById("openCVtypeSelectTag").remove();
+  document.getElementById("openCVtypeLabel").innerText = `OpenCV.js type is not optimized WASM`;
+  loadOpenCVandStart();
+} else {
+  utils.selectOpenCVType(() => {
+    loadOpenCVandStart();
+  })
+}

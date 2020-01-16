@@ -18,6 +18,9 @@ body {
   margin: 0px;
 }
 
+.opencv-type {
+  padding: 30px;
+}
 .stats-settings, .threads-control, .jitter-limit, .edge-error,
 .downscale-level, .threshold-block-size, .threshold-offset, .demo-state,
 .lower-hue-control, .upper-hue-control, .lower-saturation-control,

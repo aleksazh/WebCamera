@@ -10,11 +10,11 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   let self = this;
   this.errorOutput = document.getElementById(errorOutputId);
 
-  let opencvType = null;
-  let opencvUrl = null;
+  var openCVtype = null;
+  let opencvUrl = '../../build/wasm/desktop/opencv_threads.js';
   if (isMobileDevice()) {
-    opencvUrl = '../../build/wasm/mobile/opencv_threads.js';
-    document.getElementById("opencvTypeLabel").innerText = "OpenCV type is threads WASM";
+    opencvUrl = '../../build/wasm/mobile/opencv_not_optimized.js';
+    document.getElementById("openCVtypeLabel").innerText = "OpenCV type is threads WASM";
   }
 
   this.loadOpenCv = function (onloadCallback) {
@@ -43,36 +43,41 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   };
 
   this.selectOpenCVType = function (callback) {
-    let opencvSelectTag = document.getElementById("opencvType");
+    let opencvSelectTag = document.getElementById("openCVtypeSelectTag");
 
     opencvSelectTag.addEventListener('click', function () {
-      opencvType = opencvSelectTag.value;
-      let opencvTypeLabel = document.getElementById("opencvTypeLabel");
+      openCVtype = opencvSelectTag.value;
+      let selectedText = opencvSelectTag.options[opencvSelectTag.selectedIndex].innerHTML;
+      let openCVtypeLabel = document.getElementById("openCVtypeLabel");
+      let openCVtypeStatus = document.getElementById("openCVtypeStatus");
 
-      switch (opencvType) {
+      switch (openCVtype) {
         case 'threads':
-          opencvUrl = '../../build/wasm/desktop/opencv_threads.js';
-          opencvTypeLabel.innerText = "OpenCV type is threads WASM"
-          break;
+          opencvUrl = '../../build/wasm/desktop/opencv_threads.js'; break;
         case 'simd-threads':
-          opencvUrl = '../../build/wasm/desktop/opencv_simd_threads.js';
-          opencvTypeLabel.innerText = "OpenCV type is SIMD WASM"
-          break;
+          opencvUrl = '../../build/wasm/desktop/opencv_simd_threads.js'; break;
+        case 'simd':
+          opencvUrl = '../../build/wasm/desktop/opencv_simd_threads.js'; break;
         case 'not-optimized':
-          opencvUrl = '../../build/wasm/desktop/opencv_not_optimized.js';
-          opencvTypeLabel.innerText = "OpenCV type is not optimized WASM"
-          break;
+          opencvUrl = '../../build/wasm/desktop/opencv_not_optimized.js'; break;
         case 'asm':
-          opencvUrl = '../../build/wasm/desktop/opencv_asm.js';
-          opencvTypeLabel.innerText = "OpenCV type is ASM"
-          break;
-        default: '../../build/wasm/desktop/opencv_threads.js';
-        opencvTypeLabel.innerText = "OpenCV type is threads WASM"
+          opencvUrl = '../../build/wasm/desktop/opencv_asm.js'; break;
+        case 'select':
+            return;
+        default:
+          opencvUrl = '../../build/wasm/desktop/opencv_threads.js';
       }
-      document.getElementById("opencvTypeWrapper").remove();
+
+      openCVtypeLabel.innerText = `OpenCV.js type is ${selectedText}`;
+      openCVtypeStatus.innerText = `Loading ${selectedText} ...`;
+      opencvSelectTag.remove();
       callback();
     });
   };
+
+  this.getOpencvType = function() {
+    return openCVtype;
+  }
 
   this.createFileFromUrl = function (path, url, callback) {
     let request = new XMLHttpRequest();

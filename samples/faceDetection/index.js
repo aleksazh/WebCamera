@@ -172,9 +172,10 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  if (utils.opencvType == 'threads' || utils.opencvType == 'simd-threads')
+  // Enable threads if opencv.js type is threads wasm or simd+threads wasm.
+  if (utils.getOpencvType() == 'threads' || utils.getOpencvType() == 'simd-threads')
     enableThreads();
-  else if (utils.opencvType == 'simd')
+  else if (utils.getOpencvType() == 'simd')
     cv.parallel_pthreads_set_threads_num(1);
 
   // Event listener for dowscale parameter.
@@ -192,6 +193,7 @@ function loadOpenCVandStart() {
   utils.loadOpenCv(() => {
     utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
       utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+        document.getElementsByClassName("opencv-type")[0].remove();
         initUI();
         initCameraSettingsAndStart();
       });
@@ -200,7 +202,9 @@ function loadOpenCVandStart() {
 }
 
 if (isMobileDevice()) {
-  document.getElementById("opencvTypeWrapper").remove();
+  document.getElementById("openCVtypeStatus").innerText = "Loading not optimized WASM ...";
+  document.getElementById("openCVtypeSelectTag").remove();
+  document.getElementById("openCVtypeLabel").innerText = `OpenCV.js type is not optimized WASM`;
   loadOpenCVandStart();
 } else {
   utils.selectOpenCVType(() => {

@@ -136,7 +136,11 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  enableThreads();
+  // Enable threads if opencv.js type is threads wasm or simd+threads wasm.
+  if (utils.getOpencvType() == 'threads' || utils.getOpencvType() == 'simd-threads')
+    enableThreads();
+  else if (utils.getOpencvType() == 'simd')
+    cv.parallel_pthreads_set_threads_num(1);
 
   // Event listener for dowscale parameter.
   let downscaleLevelInput = document.getElementById('downscaleLevel');
