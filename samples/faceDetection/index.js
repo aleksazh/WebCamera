@@ -172,7 +172,10 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  enableThreads();
+  if (utils.opencvType == 'threads' || utils.opencvType == 'simd-threads')
+    enableThreads();
+  else if (utils.opencvType == 'simd')
+    cv.parallel_pthreads_set_threads_num(1);
 
   // Event listener for dowscale parameter.
   let downscaleLevelInput = document.getElementById('downscaleLevel');
@@ -185,11 +188,24 @@ function initUI() {
   });
 }
 
-utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
-      initUI();
-      initCameraSettingsAndStart();
+function loadOpenCVandStart() {
+  utils.loadOpenCv(() => {
+    utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+      utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+        initUI();
+        initCameraSettingsAndStart();
+      });
     });
   });
-});
+}
+
+if (isMobileDevice()) {
+  document.getElementById("opencvTypeWrapper").remove();
+  loadOpenCVandStart();
+} else {
+  utils.selectOpenCVType(() => {
+    loadOpenCVandStart();
+  })
+}
+
+

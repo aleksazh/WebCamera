@@ -10,8 +10,13 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
   let self = this;
   this.errorOutput = document.getElementById(errorOutputId);
 
-  let opencvUrl = '../../build/wasm/desktop/opencv.js';
-  if (isMobileDevice()) opencvUrl = '../../build/wasm/mobile/opencv.js';
+  let opencvType = null;
+  let opencvUrl = null;
+  if (isMobileDevice()) {
+    opencvUrl = '../../build/wasm/mobile/opencv_threads.js';
+    document.getElementById("opencvTypeLabel").innerText = "OpenCV type is threads WASM";
+  }
+
   this.loadOpenCv = function (onloadCallback) {
     let script = document.createElement('script');
     script.setAttribute('async', '');
@@ -35,6 +40,38 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
     script.src = opencvUrl;
     let node = document.getElementsByTagName('script')[0];
     node.parentNode.insertBefore(script, node);
+  };
+
+  this.selectOpenCVType = function (callback) {
+    let opencvSelectTag = document.getElementById("opencvType");
+
+    opencvSelectTag.addEventListener('click', function () {
+      opencvType = opencvSelectTag.value;
+      let opencvTypeLabel = document.getElementById("opencvTypeLabel");
+
+      switch (opencvType) {
+        case 'threads':
+          opencvUrl = '../../build/wasm/desktop/opencv_threads.js';
+          opencvTypeLabel.innerText = "OpenCV type is threads WASM"
+          break;
+        case 'simd-threads':
+          opencvUrl = '../../build/wasm/desktop/opencv_simd_threads.js';
+          opencvTypeLabel.innerText = "OpenCV type is SIMD WASM"
+          break;
+        case 'not-optimized':
+          opencvUrl = '../../build/wasm/desktop/opencv_not_optimized.js';
+          opencvTypeLabel.innerText = "OpenCV type is not optimized WASM"
+          break;
+        case 'asm':
+          opencvUrl = '../../build/wasm/desktop/opencv_asm.js';
+          opencvTypeLabel.innerText = "OpenCV type is ASM"
+          break;
+        default: '../../build/wasm/desktop/opencv_threads.js';
+        opencvTypeLabel.innerText = "OpenCV type is threads WASM"
+      }
+      document.getElementById("opencvTypeWrapper").remove();
+      callback();
+    });
   };
 
   this.createFileFromUrl = function (path, url, callback) {
