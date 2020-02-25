@@ -213,7 +213,7 @@ function onVideoStarted() {
   streaming = true;
   setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
-  imageCapturer = new ImageCapture(videoTrack);
+  //imageCapturer = new ImageCapture(videoTrack);
   document.getElementById('mainContent').classList.remove('hidden');
   completeStyling();
   initOpencvObjects();
@@ -228,7 +228,7 @@ function onVideoStopped() {
 
 function startVideoProcessing() {
   videoTrack = video.srcObject.getVideoTracks()[0];
-  imageCapturer = new ImageCapture(videoTrack);
+  //imageCapturer = new ImageCapture(videoTrack);
   requestAnimationFrame(processVideo);
 }
 

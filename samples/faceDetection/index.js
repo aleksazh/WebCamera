@@ -12,42 +12,29 @@ let canvasInput = null;
 let canvasInputCtx = null;
 
 let src = null;
-let gray = null;
-let eyeVec = null;
-let faceVec = null;
-let faceCascade = null;
-let eyeCascade = null;
+let frameBGR = null;
+let faceNet = null;
 
-const faceDetectionPath = 'haarcascade_frontalface_default.xml';
-const faceDetectionUrl = '../../data/classifiers/haarcascade_frontalface_default.xml';
-const eyeDetectionPath = 'haarcascade_eye.xml';
-const eyeDetectionUrl = '../../data/classifiers/haarcascade_eye.xml';
+let modelURL = "../../data/classifiers/optimizer/face-detection-adas-0001.xml";
+let binURL = "../../data/classifiers/optimizer/face-detection-adas-0001.bin";
+let modelPath = 'face-detection-adas-0001.xml';
+let binPath = 'face-detection-adas-0001.bin';
 
 const faceColor = [0, 255, 255, 255];
-const eyesColor = [0, 0, 255, 255];
 
-// In face and eyes detection, downscaleLevel parameter is used
+// In face detection, downscaleLevel parameter is used
 // to downscale resolution of input stream and insrease speed of detection.
 let downscaleLevel = 1;
 
 function initOpencvObjects() {
   src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-  gray = new cv.Mat();
+  frameBGR = new cv.Mat();
 
-  faceVec = new cv.RectVector();
-  faceCascade = new cv.CascadeClassifier();
-  // TODO(sasha): Use Web Workers to load files.
-  faceCascade.load(faceDetectionPath);
-
-  eyeVec = new cv.RectVector();
-  eyeCascade = new cv.CascadeClassifier();
-  eyeCascade.load(eyeDetectionPath);
+  faceNet = new cv.readNetFromModelOptimizer(modelPath, binPath);
 }
 
 function deleteOpencvObjects() {
-  src.delete(); gray.delete();
-  faceVec.delete(); faceCascade.delete();
-  eyeVec.delete(); eyeCascade.delete();
+  src.delete(); frameBGR.delete(); faceNet.delete();
 }
 
 function completeStyling() {
@@ -75,36 +62,27 @@ function processVideo() {
     }
     stats.begin();
     let faces = [];
-    let eyes = [];
     canvasInputCtx.drawImage(video, 0, 0, video.width, video.height);
     let imageData = canvasInputCtx.getImageData(0, 0, video.width, video.height);
     src.data.set(imageData.data);
 
     // Detect faces.
-    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-    for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(gray, gray);
-    let matSize = gray.size();
-    faceCascade.detectMultiScale(gray, faceVec);
+    cv.cvtColor(src, frameBGR, cv.COLOR_RGBA2BGR);
+    for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(frameBGR, frameBGR);
+    let matSize = frameBGR.size();
+    let blob = cv.blobFromImage(frameBGR, 1.0, {width: 672, height: 384}, [104, 117, 123, 0], false, false);
+	  faceNet.setInput(blob);
+	  let faceVec = faceNet.forward();
 
-    for (let i = 0; i < faceVec.size(); ++i) {
-      let face = faceVec.get(i);
-      // Draw face.
-      faces.push(face);
+    //for (let i = 0; i < faceVec.size(); ++i) {
+    //  let face = faceVec.get(i);
+    //  faces.push(face);
+    //}
+    faceVec.delete();
+    blob.delete();
 
-      // Detect eyes in face ROI.
-      let faceGray = gray.roi(face);
-      eyeCascade.detectMultiScale(faceGray, eyeVec);
-
-      for (let j = 0; j < eyeVec.size() && j < 2; ++j) {
-        // Draw eye.
-        let eye = eyeVec.get(j);
-        eyes.push(new cv.Rect(face.x + eye.x, face.y + eye.y, eye.width, eye.height));
-      }
-      faceGray.delete();
-    }
     canvasOutputCtx.drawImage(canvasInput, 0, 0, video.width, video.height);
     drawResults(canvasOutputCtx, faces, '#FFFF00', matSize); // Yellow color.
-    drawResults(canvasOutputCtx, eyes, '#00FFFF', matSize); // Turquoise color.
 
     stats.end();
     requestAnimationFrame(processVideo);
@@ -172,7 +150,7 @@ function initUI() {
     utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
   });
 
-  enableThreads();
+  //enableThreads();
 
   // Event listener for dowscale parameter.
   let downscaleLevelInput = document.getElementById('downscaleLevel');
@@ -186,10 +164,12 @@ function initUI() {
 }
 
 utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
-      initUI();
-      initCameraSettingsAndStart();
-    });
-  });
+	utils.createFileFromUrl(modelPath, modelURL, () => {
+    	utils.createFileFromUrl(binPath, binURL, () => {
+  			console.log('opencv.js is ready');
+        initUI();
+        initCameraSettingsAndStart();
+		});
+	});
 });
+
