@@ -12,6 +12,7 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
 
   let opencvUrl = '../../build/wasm/desktop/opencv.js';
   if (isMobileDevice()) opencvUrl = '../../build/wasm/mobile/opencv.js';
+
   this.loadOpenCv = function (onloadCallback) {
     let script = document.createElement('script');
     script.setAttribute('async', '');
@@ -56,19 +57,6 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
     request.send();
   };
 
-  this.loadImageToCanvas = function (url, cavansId) {
-    let canvas = document.getElementById(cavansId);
-    let ctx = canvas.getContext('2d');
-    let img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function () {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-    };
-    img.src = url;
-  };
-
   this.clearError = function () {
     this.errorOutput.innerHTML = '';
   };
@@ -94,17 +82,6 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
       err = err.toString().replace(/\n/g, '<br>');
     }
     this.errorOutput.innerHTML = err;
-  };
-
-  this.addFileInputHandler = function (fileInputId, canvasId) {
-    let inputElement = document.getElementById(fileInputId);
-    inputElement.addEventListener('change', (e) => {
-      let files = e.target.files;
-      if (files.length > 0) {
-        let imgUrl = URL.createObjectURL(files[0]);
-        self.loadImageToCanvas(imgUrl, canvasId);
-      }
-    }, false);
   };
 
   function onVideoCanPlay() {
