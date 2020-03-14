@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let stats = null;
 let controls = {};
 let videoConstraint;
@@ -109,7 +110,7 @@ function processVideo() {
     stats.end();
     requestAnimationFrame(processVideo);
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 };
 
@@ -126,23 +127,23 @@ function drawResults(ctx, results, color, size) {
 
 function startCamera() {
   if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+    camUtils.clearError();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.onVideoStarted);
   } else {
-    utils.stopCamera();
-    onVideoStopped();
+    camUtils.stopCamera();
+    camUtils.onVideoStopped();
   }
 }
 
 function cleanupAndStop() {
   deleteOpencvObjects();
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
 function initUI() {
   let menuHeight = parseInt(getComputedStyle(
     document.querySelector('.camera-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
   initStats();
 
   // TakePhoto event by clicking takePhotoButton.
@@ -151,7 +152,7 @@ function initUI() {
     // Here we are not using takePhoto() per se.
     // new ImageCapture(videoTrack) gives image without applied filter.
     let dstCanvas = document.getElementById('gallery');
-    drawCanvas(dstCanvas, canvasOutput);
+    camUtils.drawCanvas(dstCanvas, canvasOutput);
   });
 
   // TODO(sasha): move to utils.js.
@@ -167,12 +168,12 @@ function initUI() {
       videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
     }
-    utils.clearError();
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
+    camUtils.clearError();
+    camUtils.stopCamera();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.startVideoProcessing);
   });
 
-  enableThreads();
+  ocvUtils.enableThreads();
 
   // Event listener for dowscale parameter.
   let downscaleLevelInput = document.getElementById('downscaleLevel');
@@ -185,11 +186,11 @@ function initUI() {
   });
 }
 
-utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+ocvUtils.loadOpenCv(() => {
+  ocvUtils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+    ocvUtils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
       initUI();
-      initCameraSettingsAndStart();
+      camUtils.initCameraSettingsAndStart();
     });
   });
 });

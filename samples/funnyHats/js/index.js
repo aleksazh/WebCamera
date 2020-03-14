@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let stats = null;
 let controls = {};
 let videoConstraint;
@@ -158,23 +159,23 @@ function processVideo() {
     stats.end();
     requestAnimationFrame(processVideo);
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 };
 
 function startCamera() {
   if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStartedCustom);
+    camUtils.clearError();
+    camUtils.startCamera(videoConstraint, 'videoInput', onVideoStartedCustom);
   } else {
-    utils.stopCamera();
-    onVideoStopped();
+    camUtils.stopCamera();
+    camUtils.onVideoStopped();
   }
 }
 
 function onVideoStartedCustom() {
   streaming = true;
-  setMainCanvasProperties(video);
+  camUtils.setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
   document.getElementById('mainContent').classList.remove('hidden');
   completeStyling();
@@ -186,14 +187,14 @@ function onVideoStartedCustom() {
 function cleanupAndStop() {
   deleteOpencvObjects();
   deleteHats(); deleteGlasses();
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
-utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
-    utils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
+ocvUtils.loadOpenCv(() => {
+  ocvUtils.createFileFromUrl(faceDetectionPath, faceDetectionUrl, () => {
+    ocvUtils.createFileFromUrl(eyeDetectionPath, eyeDetectionUrl, () => {
       initUI();
-      initCameraSettingsAndStart();
+      camUtils.initCameraSettingsAndStart();
     });
   });
 });

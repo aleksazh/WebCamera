@@ -1,4 +1,4 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
 let video = document.getElementById('videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
 let canvasContext = canvasOutput.getContext('2d');
@@ -48,7 +48,7 @@ function processVideo() {
     canvasContext.drawImage(video, 0, 0, video.width, video.height);
     requestAnimationFrame(processVideo);
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 }
 
@@ -57,7 +57,7 @@ function initUI() {
     document.querySelector('.camera-bar-wrapper')).height);
   menuHeight += parseInt(getComputedStyle(
     document.querySelector('.output-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
 
   let copyButton = document.getElementById('copyButton');
   copyButton.addEventListener('click', function () {
@@ -86,12 +86,12 @@ function createTakePhotoListener() {
 
 function createRetryButton() {
   let cameraBar = document.getElementById('cameraBar');
-  addButtonToCameraBar('retryButton', 'refresh', 1);
+  camUtils.addButtonToCameraBar('retryButton', 'refresh', 1);
   let retryButton = document.getElementById('retryButton');
 
   retryButton.addEventListener('click', function () {
     cameraBar.removeChild(cameraBar.children[0]);
-    addButtonToCameraBar('takePhotoButton', 'photo_camera', 1);
+    camUtils.addButtonToCameraBar('takePhotoButton', 'photo_camera', 1);
 
     createTakePhotoListener();
 
@@ -109,17 +109,17 @@ function createRetryButton() {
 
 function startCamera() {
   if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+    camUtils.clearError();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.onVideoStarted);
   } else {
     cleanupAndStop();
   }
 }
 
 function cleanupAndStop() {
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
 
 initUI();
-initCameraSettingsAndStart();
+camUtils.initCameraSettingsAndStart();

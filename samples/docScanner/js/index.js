@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let controls = {};
 
 let videoConstraint;
@@ -58,14 +59,14 @@ function processVideo() {
     cv.imshow('canvasOutput', src);
     requestAnimationFrame(processVideo);
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 }
 
 function initUI() {
   let menuHeight = parseInt(getComputedStyle(
     document.querySelector('.camera-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
 
   // Event listener for threshold blockSize parameter.
   let thresholdBlockSizeInput = document.getElementById('thresholdBlockSize');
@@ -105,15 +106,15 @@ function initUI() {
 }
 
 function startCamera() {
-  utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+  camUtils.startCamera(videoConstraint, 'videoInput', camUtils.onVideoStarted);
 }
 
 function cleanupAndStop() {
   src.delete();
-  utils.stopCamera();
+  camUtils.stopCamera();
 }
 
-utils.loadOpenCv(() => {
+ocvUtils.loadOpenCv(() => {
   initUI();
-  initCameraSettingsAndStart();
+  camUtils.initCameraSettingsAndStart();
 });

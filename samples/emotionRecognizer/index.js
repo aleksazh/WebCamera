@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let stats = null;
 let controls = {};
 let videoConstraint;
@@ -160,23 +161,23 @@ function processVideo() {
     stats.end();
     requestAnimationFrame(processVideo);
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 };
 
 function startCamera() {
   if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStartedCustom);
+    camUtils.clearError();
+    camUtils.startCamera(videoConstraint, 'videoInput', onVideoStartedCustom);
   } else {
-    utils.stopCamera();
-    onVideoStopped();
+    camUtils.stopCamera();
+    camUtils.onVideoStopped();
   }
 }
 
 function onVideoStartedCustom() {
   streaming = true;
-  setMainCanvasProperties(video);
+  camUtils.setMainCanvasProperties(video);
   videoTrack = video.srcObject.getVideoTracks()[0];
   document.getElementById('mainContent').classList.remove('hidden');
   completeStyling();
@@ -187,13 +188,13 @@ function onVideoStartedCustom() {
 
 function cleanupAndStop() {
   deleteOpencvObjects();
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
 function initUI() {
   let menuHeight = parseInt(getComputedStyle(
     document.querySelector('.camera-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
   initStats();
 
   // TakePhoto event by clicking takePhotoButton.
@@ -202,7 +203,7 @@ function initUI() {
     // Here we are not using takePhoto() per se.
     // new ImageCapture(videoTrack) gives image without applied filter.
     let dstCanvas = document.getElementById('gallery');
-    drawCanvas(dstCanvas, canvasOutput);
+    camUtils.drawCanvas(dstCanvas, canvasOutput);
   });
 
   // TODO(sasha): move to utils.js.
@@ -218,19 +219,19 @@ function initUI() {
       videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
     }
-    utils.clearError();
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
+    camUtils.clearError();
+    camUtils.stopCamera();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.startVideoProcessing);
   });
 
-  enableThreads();
+  ocvUtils.enableThreads();
 }
 
-utils.loadOpenCv(() => {
-  utils.createFileFromUrl(faceModelPath, faceModelUrl, () => {
-    utils.createFileFromUrl(emotionModelPath, emotionModelUrl, () => {
+ocvUtils.loadOpenCv(() => {
+  ocvUtils.createFileFromUrl(faceModelPath, faceModelUrl, () => {
+    ocvUtils.createFileFromUrl(emotionModelPath, emotionModelUrl, () => {
       initUI();
-      initCameraSettingsAndStart();
+      camUtils.initCameraSettingsAndStart();
     });
   });
 });

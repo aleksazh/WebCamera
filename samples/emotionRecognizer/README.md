@@ -8,7 +8,7 @@ Demonstrate emotion recognition using Fisher Faces recognition model ([how to tr
 1. Load `emotion_detection_model.xml` using `createFileFromUrl()` from `utils.js`:
 
 ```javascript
-utils.createFileFromUrl('emotion_detection_model.xml', emotionModelUrl, callback);
+ocvUtils.createFileFromUrl('emotion_detection_model.xml', emotionModelUrl, callback);
 ```
 
 2. Initialize array of emotions which model is able to recognize:

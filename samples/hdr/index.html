@@ -39,7 +39,7 @@
   <script>
     window.onload = () => {
       document.querySelector('#start').addEventListener('click', () => { startCamera() });
-      document.querySelector('#takePhotoButton').addEventListener('click', () => { takePhoto() });
+      document.querySelector('#takePhotoButton').addEventListener('click', () => { camUtils.takePhoto() });
 
       addTextToCanvas('Photo 1', 'takePhotoCanvas1');
       addTextToCanvas('Photo 2 (tip: adjust exposure!)', 'takePhotoCanvas2');
@@ -50,7 +50,7 @@
     };
   </script>
   <script>
-    var featuresReady = checkFeatures(document.getElementById("info"), {
+    var featuresReady = camUtils.checkFeatures(document.getElementById("info"), {
       webrtc: true
       // FIXME: Wasm
       // wasm: true

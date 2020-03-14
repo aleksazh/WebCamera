@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let stats = null;
 let videoConstraint;
 let streaming = false;
@@ -159,20 +160,20 @@ function processVideo() {
 function startCamera() {
 
   if (!streaming) {
-    utils.clearError();
-    utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+    camUtils.clearError();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.onVideoStarted);
   } else {
-    utils.stopCamera();
-    onVideoStopped();
+    camUtils.stopCamera();
+    camUtils.onVideoStopped();
   }
 }
 
 function cleanupAndStop() {
   deleteOpencvObjects();
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
-utils.loadOpenCv(() => {
+ocvUtils.loadOpenCv(() => {
   initUI();
-  initCameraSettingsAndStart();
+  camUtils.initCameraSettingsAndStart();
 });

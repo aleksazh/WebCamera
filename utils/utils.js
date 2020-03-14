@@ -1,19 +1,268 @@
-const resolutions = {
-  'qqvga': { width: { exact: 160 }, height: { exact: 120 } },
-  'qvga': { width: { exact: 320 }, height: { exact: 240 } },
-  'vga': { width: { exact: 640 }, height: { exact: 480 } }
+class CamUtils { // eslint-disable-line no-unused-vars
+  self = this;
+  resolutions = {
+    'qqvga': { width: { exact: 160 }, height: { exact: 120 } },
+    'qvga': { width: { exact: 320 }, height: { exact: 240 } },
+    'vga': { width: { exact: 640 }, height: { exact: 480 } }
+  };
+
+  constructor(errorOutputId) {
+    this.errorOutputId = errorOutputId;
+    this.errorOutput = document.getElementById(errorOutputId);
+  }
+
+  clearError() {
+    this.errorOutput.innerHTML = '';
+  };
+
+  printError(err) {
+    document.getElementById("mainContent").classList.add("hidden");
+    if (typeof err === 'undefined') {
+      err = '';
+    } else if (typeof err === 'number') {
+      if (!isNaN(err)) {
+        if (typeof cv !== 'undefined') {
+          err = 'Exception: ' + cv.exceptionFromPtr(err).msg;
+        }
+      }
+    } else if (typeof err === 'string') {
+      let ptr = Number(err.split(' ')[0]);
+      if (!isNaN(ptr)) {
+        if (typeof cv !== 'undefined') {
+          err = 'Exception: ' + cv.exceptionFromPtr(ptr).msg;
+        }
+      }
+    } else if (err instanceof Error) {
+      err = err.toString().replace(/\n/g, '<br>');
+    }
+    this.errorOutput.innerHTML = err;
+  };
+
+  static isMobileDevice() {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+      .test(navigator.userAgent)) {
+      return true;
+    }
+    return false;
+  };
+
+  getVideoConstraint(menuHeight) {
+    menuHeight = menuHeight + 120; // Add 120 pixels for browser panel.
+
+    if (CamUtils.isMobileDevice()) {
+      // TODO(sasha): figure out why getUserMedia(...) in utils.js
+      // swap width and height for mobile devices.
+      videoConstraint = {
+        //width: { ideal: window.screen.width },
+        //height: { ideal: window.screen.height - menuHeight }
+        width: { ideal: window.screen.height - menuHeight },
+        height: { ideal: window.screen.width }
+      };
+    } else {
+      if (window.innerWidth < 960) {
+        videoConstraint = resolutions['qvga'];
+      } else {
+        videoConstraint = resolutions['vga'];
+      }
+    }
+  }
+
+  setMainCanvasProperties(video) {
+    video.width = video.videoWidth;
+    video.height = video.videoHeight;
+    document.getElementById('mainContent').style.width = `${video.width}px`;
+    document.querySelector('.canvas-wrapper').style.height =
+      `${video.height}px`;
+  }
+
+  static checkFeatures(info, features) {
+    var wasmSupported = true, webrtcSupported = true;
+    if (features.webrtc) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        webrtcSupported = false;
+      }
+    }
+    if (features.wasm && !window.WebAssembly) {
+      wasmSupported = false;
+    }
+
+    if (!webrtcSupported || !wasmSupported) {
+      var text = "Your web browser doesn't support ";
+      var len = text.length;
+      if (!webrtcSupported) {
+        text += "WebRTC";
+      }
+      if (!wasmSupported) {
+        if (text.length > len) {
+          text += " and ";
+        }
+        text += "WebAssembly"
+      }
+      text += ".";
+      info.innerHTML = text;
+      return false;
+    }
+
+    return true;
+  }
+
+  initCameraSettingsAndStart() {
+    // Detect back and front cameras.
+    navigator.mediaDevices.enumerateDevices()
+      .then(function (devices) {
+        devices.forEach(device => {
+          if (device.kind == 'videoinput') {
+
+            if (device.facingMode == "environment"
+              || device.label.indexOf("facing back") >= 0)
+              controls.backCamera = device;
+
+            else if (device.facingMode == "user"
+              || device.label.indexOf("facing front") >= 0)
+              controls.frontCamera = device;
+          }
+        });
+        // Disable facingModeButton if there is no environment or user mode.
+        let facingModeButton = document.getElementById('facingModeButton');
+        if (facingModeButton) {
+          if (controls.frontCamera === undefined || controls.backCamera === undefined) {
+            facingModeButton.style.color = 'gray';
+            facingModeButton.style.border = '2px solid gray';
+          } else {
+            facingModeButton.disabled = false;
+          }
+        }
+
+        // Set initial facingMode value if camera is available.
+        if (controls.backCamera !== undefined) {
+          controls.facingMode = 'environment';
+          videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
+        }
+
+        startCamera();
+      });
+  }
+
+  startCamera(videoConstraint, videoId, callback) {
+    let video = document.getElementById(videoId);
+    navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: false })
+      .then(function (stream) {
+        video.srcObject = stream;
+        video.play();
+        self.video = video;
+        self.stream = stream;
+        self.onCameraStartedCallback = callback;
+        video.addEventListener('canplay', onVideoCanPlay, false);
+      })
+      .catch(function (err) {
+        self.printError('Camera Error: ' + err.name + ' ' + err.message);
+      });
+  };
+
+  stopCamera() {
+    if (this.video) {
+      this.video.pause();
+      this.video.srcObject = null;
+      this.video.removeEventListener('canplay', onVideoCanPlay);
+    }
+    if (this.stream) {
+      this.stream.getVideoTracks()[0].stop();
+    }
+  };
+
+  onVideoCanPlay() {
+    if (self.onCameraStartedCallback) {
+      self.onCameraStartedCallback(self.stream, self.video);
+    }
+  };
+
+  onVideoStarted() {
+    streaming = true;
+    setMainCanvasProperties(video);
+    videoTrack = video.srcObject.getVideoTracks()[0];
+    try {
+      imageCapturer = new ImageCapture(videoTrack);
+    } catch (error) {
+      console.error(error);
+    }
+    document.getElementById('mainContent').classList.remove('hidden');
+    completeStyling();
+    initOpencvObjects();
+    // Start processing.
+    requestAnimationFrame(processVideo);
+  }
+
+  onVideoStopped() {
+    streaming = false;
+    let canvasContext = canvasOutput.getContext('2d');
+    canvasContext.clearRect(0, 0, video.width, video.height);
+  }
+
+  startVideoProcessing() {
+    videoTrack = video.srcObject.getVideoTracks()[0];
+    try {
+      imageCapturer = new ImageCapture(videoTrack);
+    } catch (error) {
+      console.error(error);
+    }
+    requestAnimationFrame(processVideo);
+  }
+
+  static drawCanvas(canvas, img) {
+    canvas.width = getComputedStyle(canvas).width.split('px')[0];
+    canvas.height = getComputedStyle(canvas).height.split('px')[0];
+    let ratio = Math.max(canvas.width / img.width, canvas.height / img.height);
+    let x = (canvas.width - img.width * ratio) / 2;
+    let y = (canvas.height - img.height * ratio) / 2;
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
+      x, y, img.width * ratio, img.height * ratio);
+  }
+
+  static takePhoto(photoSettings = null) {
+    imageCapturer.takePhoto(photoSettings)
+      .then(blob => createImageBitmap(blob))
+      .then(imageBitmap => {
+        const canvas = document.getElementById('gallery');
+        drawCanvas(canvas, imageBitmap);
+      })
+      .catch((err) => console.error("takePhoto() failed: ", err));
+  }
+
+  addButtonToCameraBar(id, text, maxItems) {
+    let cameraBar = document.getElementById('cameraBar');
+    let liElement = document.createElement('li');
+    liElement.classList.add('camera-bar-item');
+    if (maxItems == 3) {
+      liElement.classList.add('bar-with-three-items');
+    } else if (maxItems == 2) {
+      liElement.classList.add('bar-with-two-items');
+    } else { // 1 item
+      liElement.classList.add('bar-with-one-item');
+    }
+    let divElement = document.createElement('div');
+    divElement.classList.add('take-photo-wrapper');
+    let button = document.createElement('button');
+    button.setAttribute('id', id);
+    button.classList.add('camera-bar-icon');
+    button.classList.add('material-icons');
+    button.innerText = text;
+    divElement.appendChild(button);
+    liElement.appendChild(divElement);
+    cameraBar.appendChild(liElement);
+  }
 };
 
-const DEFAULT_THREADS_NUM = 3;
+class OcvUtils {
+  DEFAULT_THREADS_NUM = 3;
 
-function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
-  let self = this;
-  this.errorOutput = document.getElementById(errorOutputId);
+  constructor(opencvUrl = '../../build/wasm/desktop/opencv.js') {
+    this.opencvUrl = opencvUrl;
+    if (CamUtils.isMobileDevice()) this.opencvUrl
+      = '../../build/wasm/mobile/opencv.js';
+  }
 
-  let opencvUrl = '../../build/wasm/desktop/opencv.js';
-  if (isMobileDevice()) opencvUrl = '../../build/wasm/mobile/opencv.js';
-
-  this.loadOpenCv = function (onloadCallback) {
+  loadOpenCv = function (onloadCallback) {
     let script = document.createElement('script');
     script.setAttribute('async', '');
     script.setAttribute('type', 'text/javascript');
@@ -38,7 +287,7 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
     node.parentNode.insertBefore(script, node);
   };
 
-  this.createFileFromUrl = function (path, url, callback) {
+  createFileFromUrl = function (path, url, callback) {
     let request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
@@ -57,330 +306,88 @@ function Utils(errorOutputId) { // eslint-disable-line no-unused-vars
     request.send();
   };
 
-  this.clearError = function () {
-    this.errorOutput.innerHTML = '';
-  };
-
-  this.printError = function (err) {
-    document.getElementById("mainContent").classList.add("hidden");
-    if (typeof err === 'undefined') {
-      err = '';
-    } else if (typeof err === 'number') {
-      if (!isNaN(err)) {
-        if (typeof cv !== 'undefined') {
-          err = 'Exception: ' + cv.exceptionFromPtr(err).msg;
+  enableThreads() {
+    if (!CamUtils.isMobileDevice()) {
+      let threadsControl = document.getElementsByClassName('threads-control')[0];
+      threadsControl.classList.remove('hidden');
+      let threadsNumLabel = document.getElementById('threadsNumLabel');
+      let threadsNum = document.getElementById('threadsNum');
+      threadsNum.max = navigator.hardwareConcurrency;
+      threadsNumLabel.innerHTML = `Number of threads (1 - ${threadsNum.max}):&nbsp;`;
+      if (DEFAULT_THREADS_NUM <= threadsNum.max) threadsNum.value = DEFAULT_THREADS_NUM;
+      else threadsNum.value = 1;
+      cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
+      threadsNum.addEventListener('change', () => {
+        if (Number(threadsNum.value) <= Number(threadsNum.max) &&
+          Number(threadsNum.value) >= Number(threadsNum.min)) {
+          cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
         }
-      }
-    } else if (typeof err === 'string') {
-      let ptr = Number(err.split(' ')[0]);
-      if (!isNaN(ptr)) {
-        if (typeof cv !== 'undefined') {
-          err = 'Exception: ' + cv.exceptionFromPtr(ptr).msg;
-        }
-      }
-    } else if (err instanceof Error) {
-      err = err.toString().replace(/\n/g, '<br>');
-    }
-    this.errorOutput.innerHTML = err;
-  };
-
-  function onVideoCanPlay() {
-    if (self.onCameraStartedCallback) {
-      self.onCameraStartedCallback(self.stream, self.video);
-    }
-  };
-
-  this.startCamera = function (videoConstraint, videoId, callback) {
-    let video = document.getElementById(videoId);
-    navigator.mediaDevices.getUserMedia({ video: videoConstraint, audio: false })
-      .then(function (stream) {
-        video.srcObject = stream;
-        video.play();
-        self.video = video;
-        self.stream = stream;
-        self.onCameraStartedCallback = callback;
-        video.addEventListener('canplay', onVideoCanPlay, false);
-      })
-      .catch(function (err) {
-        self.printError('Camera Error: ' + err.name + ' ' + err.message);
       });
-  };
-
-  this.stopCamera = function () {
-    if (this.video) {
-      this.video.pause();
-      this.video.srcObject = null;
-      this.video.removeEventListener('canplay', onVideoCanPlay);
-    }
-    if (this.stream) {
-      this.stream.getVideoTracks()[0].stop();
-    }
-  };
-};
-
-
-function checkFeatures(info, features) {
-  var wasmSupported = true, webrtcSupported = true;
-  if (features.webrtc) {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      webrtcSupported = false;
     }
   }
-  if (features.wasm && !window.WebAssembly) {
-    wasmSupported = false;
+
+  // Get coordinates of contour and sort them clockwise
+  // with upper left point as the first point.
+  getContourCoordinates(contour) {
+    let coordinates = [];
+    let sum = [];
+    for (let i = 0; i < contour.rows; i++) {
+      coordinates.push({ x: contour.data32S[i * 2], y: contour.data32S[i * 2 + 1] });
+      sum.push(coordinates[i].x + coordinates[i].y);
+    }
+
+    let sortedCoordinates = [0, 0, 0, 0];
+    let firstIndex = sum.indexOf(Math.min(...sum));
+    if (firstIndex == 0) {
+      sortedCoordinates[0] = coordinates[0];
+      sortedCoordinates[1] = coordinates[3];
+      sortedCoordinates[2] = coordinates[2];
+      sortedCoordinates[3] = coordinates[1];
+    } else { // firstIndex == 1
+      sortedCoordinates[0] = coordinates[1];
+      sortedCoordinates[1] = coordinates[0];
+      sortedCoordinates[2] = coordinates[3];
+      sortedCoordinates[3] = coordinates[2];
+    }
+    return sortedCoordinates;
   }
 
-  if (!webrtcSupported || !wasmSupported) {
-    var text = "Your web browser doesn't support ";
-    var len = text.length;
-    if (!webrtcSupported) {
-      text += "WebRTC";
-    }
-    if (!wasmSupported) {
-      if (text.length > len) {
-        text += " and ";
+  findMaxAreaContour(contours) {
+    let approxCnt = new cv.Mat();
+    let maxArea = 0;
+    let index;
+    for (let i = 0; i < contours.size(); ++i) {
+      let cnt = contours.get(i);
+      let perimeter = cv.arcLength(cnt, true);
+      // Approximate the contour with the (0.01 * perimeter) precision.
+      cv.approxPolyDP(cnt, approxCnt, 0.01 * perimeter, true);
+      let area = cv.contourArea(cnt);
+      // Check that contour has 4 angles.
+      if (approxCnt.rows == 4 && area > maxArea) {
+        maxArea = area;
+        index = i;
       }
-      text += "WebAssembly"
+      cnt.delete();
     }
-    text += ".";
-    info.innerHTML = text;
-    return false;
+    approxCnt.delete();
+    return { maxArea: maxArea, i: index };
   }
 
-  return true;
-}
+  resizeImage(image, width = 'undefined', height = 'undefined') {
+    let dim;
 
-function isMobileDevice() {
-  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
-    .test(navigator.userAgent)) {
-    return true;
-  }
-  return false;
-};
+    if (width === 'undefined' && height === 'undefined')
+      return image;
 
-function getVideoConstraint(menuHeight) {
-  menuHeight = menuHeight + 120; // Add 120 pixels for browser panel.
-
-  if (isMobileDevice()) {
-    // TODO(sasha): figure out why getUserMedia(...) in utils.js
-    // swap width and height for mobile devices.
-    videoConstraint = {
-      //width: { ideal: window.screen.width },
-      //height: { ideal: window.screen.height - menuHeight }
-      width: { ideal: window.screen.height - menuHeight },
-      height: { ideal: window.screen.width }
-    };
-  } else {
-    if (window.innerWidth < 960) {
-      videoConstraint = resolutions['qvga'];
+    let ratio;
+    if (width === 'undefined') {
+      ratio = height / image.rows;
+      dim = new cv.Size(parseInt(image.cols * ratio), height);
     } else {
-      videoConstraint = resolutions['vga'];
+      ratio = width / image.cols;
+      dim = new cv.Size(width, parseInt(image.rows * ratio));
     }
+
+    cv.resize(image, image, dim, cv.INTER_AREA);
   }
-}
-
-function setMainCanvasProperties(video) {
-  video.width = video.videoWidth;
-  video.height = video.videoHeight;
-  document.getElementById('mainContent').style.width = `${video.width}px`;
-  document.querySelector('.canvas-wrapper').style.height =
-    `${video.height}px`;
-}
-
-function onVideoStarted() {
-  streaming = true;
-  setMainCanvasProperties(video);
-  videoTrack = video.srcObject.getVideoTracks()[0];
-  try {
-    imageCapturer = new ImageCapture(videoTrack);
-  } catch (error) {
-    console.error(error);
-  }
-  document.getElementById('mainContent').classList.remove('hidden');
-  completeStyling();
-  initOpencvObjects();
-  // Start processing.
-  requestAnimationFrame(processVideo);
-}
-
-function onVideoStopped() {
-  streaming = false;
-  let canvasContext = canvasOutput.getContext('2d');
-  canvasContext.clearRect(0, 0, video.width, video.height);
-}
-
-function startVideoProcessing() {
-  videoTrack = video.srcObject.getVideoTracks()[0];
-  try {
-    imageCapturer = new ImageCapture(videoTrack);
-  } catch (error) {
-    console.error(error);
-  }
-  requestAnimationFrame(processVideo);
-}
-
-function initCameraSettingsAndStart() {
-  // Detect back and front cameras.
-  navigator.mediaDevices.enumerateDevices()
-    .then(function (devices) {
-      devices.forEach(device => {
-        if (device.kind == 'videoinput') {
-
-          if (device.facingMode == "environment"
-            || device.label.indexOf("facing back") >= 0)
-            controls.backCamera = device;
-
-          else if (device.facingMode == "user"
-            || device.label.indexOf("facing front") >= 0)
-            controls.frontCamera = device;
-        }
-      });
-      // Disable facingModeButton if there is no environment or user mode.
-      let facingModeButton = document.getElementById('facingModeButton');
-      if (facingModeButton) {
-        if (controls.frontCamera === undefined || controls.backCamera === undefined) {
-          facingModeButton.style.color = 'gray';
-          facingModeButton.style.border = '2px solid gray';
-        } else {
-          facingModeButton.disabled = false;
-        }
-      }
-
-      // Set initial facingMode value if camera is available.
-      if (controls.backCamera !== undefined) {
-        controls.facingMode = 'environment';
-        videoConstraint.deviceId = { exact: controls.backCamera.deviceId };
-      }
-
-      startCamera();
-    });
-}
-
-function drawCanvas(canvas, img) {
-  canvas.width = getComputedStyle(canvas).width.split('px')[0];
-  canvas.height = getComputedStyle(canvas).height.split('px')[0];
-  let ratio = Math.max(canvas.width / img.width, canvas.height / img.height);
-  let x = (canvas.width - img.width * ratio) / 2;
-  let y = (canvas.height - img.height * ratio) / 2;
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-  canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
-    x, y, img.width * ratio, img.height * ratio);
-}
-
-function takePhoto(photoSettings = null) {
-  imageCapturer.takePhoto(photoSettings)
-    .then(blob => createImageBitmap(blob))
-    .then(imageBitmap => {
-      const canvas = document.getElementById('gallery');
-      drawCanvas(canvas, imageBitmap);
-    })
-    .catch((err) => console.error("takePhoto() failed: ", err));
-}
-
-// Get coordinates of contour and sort them clockwise
-// with upper left point as the first point.
-function getContourCoordinates(contour) {
-  let coordinates = [];
-  let sum = [];
-  for (let i = 0; i < contour.rows; i++) {
-    coordinates.push({ x: contour.data32S[i * 2], y: contour.data32S[i * 2 + 1] });
-    sum.push(coordinates[i].x + coordinates[i].y);
-  }
-
-  let sortedCoordinates = [0, 0, 0, 0];
-  let firstIndex = sum.indexOf(Math.min(...sum));
-  if (firstIndex == 0) {
-    sortedCoordinates[0] = coordinates[0];
-    sortedCoordinates[1] = coordinates[3];
-    sortedCoordinates[2] = coordinates[2];
-    sortedCoordinates[3] = coordinates[1];
-  } else { // firstIndex == 1
-    sortedCoordinates[0] = coordinates[1];
-    sortedCoordinates[1] = coordinates[0];
-    sortedCoordinates[2] = coordinates[3];
-    sortedCoordinates[3] = coordinates[2];
-  }
-  return sortedCoordinates;
-}
-
-function findMaxAreaContour(contours) {
-  let approxCnt = new cv.Mat();
-  let maxArea = 0;
-  let index;
-  for (let i = 0; i < contours.size(); ++i) {
-    let cnt = contours.get(i);
-    let perimeter = cv.arcLength(cnt, true);
-    // Approximate the contour with the (0.01 * perimeter) precision.
-    cv.approxPolyDP(cnt, approxCnt, 0.01 * perimeter, true);
-    let area = cv.contourArea(cnt);
-    // Check that contour has 4 angles.
-    if (approxCnt.rows == 4 && area > maxArea) {
-      maxArea = area;
-      index = i;
-    }
-    cnt.delete();
-  }
-  approxCnt.delete();
-  return { maxArea: maxArea, i: index };
-}
-
-function resizeImage(image, width = 'undefined', height = 'undefined') {
-  let dim;
-
-  if (width === 'undefined' && height === 'undefined')
-    return image;
-
-  let ratio;
-  if (width === 'undefined') {
-    ratio = height / image.rows;
-    dim = new cv.Size(parseInt(image.cols * ratio), height);
-  } else {
-    ratio = width / image.cols;
-    dim = new cv.Size(width, parseInt(image.rows * ratio));
-  }
-
-  cv.resize(image, image, dim, cv.INTER_AREA);
-}
-
-function addButtonToCameraBar(id, text, maxItems) {
-  let cameraBar = document.getElementById('cameraBar');
-  let liElement = document.createElement('li');
-  liElement.classList.add('camera-bar-item');
-  if (maxItems == 3) {
-    liElement.classList.add('bar-with-three-items');
-  } else if (maxItems == 2) {
-    liElement.classList.add('bar-with-two-items');
-  } else { // 1 item
-    liElement.classList.add('bar-with-one-item');
-  }
-  let divElement = document.createElement('div');
-  divElement.classList.add('take-photo-wrapper');
-  let button = document.createElement('button');
-  button.setAttribute('id', id);
-  button.classList.add('camera-bar-icon');
-  button.classList.add('material-icons');
-  button.innerText = text;
-  divElement.appendChild(button);
-  liElement.appendChild(divElement);
-  cameraBar.appendChild(liElement);
-}
-
-function enableThreads() {
-  if (!isMobileDevice()) {
-    let threadsControl = document.getElementsByClassName('threads-control')[0];
-    threadsControl.classList.remove('hidden');
-    let threadsNumLabel = document.getElementById('threadsNumLabel');
-    let threadsNum = document.getElementById('threadsNum');
-    threadsNum.max = navigator.hardwareConcurrency;
-    threadsNumLabel.innerHTML = `Number of threads (1 - ${threadsNum.max}):&nbsp;`;
-    if (DEFAULT_THREADS_NUM <= threadsNum.max) threadsNum.value = DEFAULT_THREADS_NUM;
-    else threadsNum.value = 1;
-    cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-    threadsNum.addEventListener('change', () => {
-      if (Number(threadsNum.value) <= Number(threadsNum.max) &&
-        Number(threadsNum.value) >= Number(threadsNum.min)) {
-        cv.parallel_pthreads_set_threads_num(parseInt(threadsNum.value));
-      }
-    });
-  }
-}
+};

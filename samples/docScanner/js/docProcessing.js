@@ -23,7 +23,7 @@ function startProcessing(src) {
   // Find the contour representing the piece of paper being scanned.
   cv.findContours(dst, contours, hierarchy,
     cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-  let maxAreaResult = findMaxAreaContour(contours);
+  let maxAreaResult = ocvUtils.findMaxAreaContour(contours);
   showContour(src, contours, maxAreaResult);
 
   addCanvasEventListeners();
@@ -60,7 +60,7 @@ function showContour(src, contours, res) {
     let cnt = contours.get(res.i);
     let perimeter = cv.arcLength(cnt, true);
     cv.approxPolyDP(cnt, approxCnt, 0.01 * perimeter, true);
-    approxCoords = getContourCoordinates(approxCnt);
+    approxCoords = ocvUtils.getContourCoordinates(approxCnt);
     cnt.delete();
   } else {
     // Create default edges because we didn't detect any document.
@@ -92,13 +92,13 @@ function createTakePhotoListener() {
 
 function createRetryButton() {
   let cameraBar = document.getElementById('cameraBar');
-  addButtonToCameraBar('retryButton', 'refresh', 2);
+  camUtils.addButtonToCameraBar('retryButton', 'refresh', 2);
   let retryButton = document.getElementById('retryButton');
 
   retryButton.addEventListener('click', function () {
     cameraBar.removeChild(cameraBar.children[0]);
     cameraBar.removeChild(cameraBar.children[0]);
-    addButtonToCameraBar('takePhotoButton', 'photo_camera', 1);
+    camUtils.addButtonToCameraBar('takePhotoButton', 'photo_camera', 1);
 
     document.getElementsByTagName('body')[0]
       .style.overscrollBehaviorY = 'auto';
@@ -128,12 +128,12 @@ function createRetryButton() {
 
 function createOkButton(src, approxCoords) {
   let cameraBar = document.getElementById('cameraBar');
-  addButtonToCameraBar('okButton', 'done', 2);
+  camUtils.addButtonToCameraBar('okButton', 'done', 2);
   let okButton = document.getElementById('okButton');
 
   okButton.addEventListener('click', function () {
     cameraBar.removeChild(cameraBar.children[1]);
-    addButtonToCameraBar('saveButton', 'save_alt', 2);
+    camUtils.addButtonToCameraBar('saveButton', 'save_alt', 2);
 
     // Show BlockSize and Offset sliders.
     let blockSizeSettings =
@@ -175,8 +175,9 @@ function resizeDoc(image) {
   let videoAspectRatio = video.height / video.width;
   let docAspectRatio = image.rows / image.cols;
   if (docAspectRatio > videoAspectRatio)
-    resizeImage(image, undefined, height = video.height);
-  else resizeImage(image, width = video.width);
+    ocvUtils.resizeImage(image, undefined, height = video.height);
+  else
+    ocvUtils.resizeImage(image, width = video.width);
 }
 
 function showScannedDoc(image) {
@@ -252,7 +253,7 @@ function addCanvasEventListeners() {
   canvasOutput.addEventListener('touchmove', drag);
   canvasOutput.addEventListener('touchend', endDragging);
   canvasOutput.addEventListener('touchcancel', cancelDragging);
-  if (!isMobileDevice()) {
+  if (!CamUtils.isMobileDevice()) {
     canvasOutput.addEventListener('mousedown', startDragging);
     canvasOutput.addEventListener('mousemove', drag);
     canvasOutput.addEventListener('mouseup', endDragging);
@@ -265,7 +266,7 @@ function removeCanvasEventListeners() {
   canvasOutput.removeEventListener('touchmove', drag);
   canvasOutput.removeEventListener('touchend', endDragging);
   canvasOutput.removeEventListener('touchcancel', cancelDragging);
-  if (!isMobileDevice()) {
+  if (!CamUtils.isMobileDevice()) {
     canvasOutput.removeEventListener("mousedown", startDragging);
     canvasOutput.removeEventListener("mousemove", drag);
     canvasOutput.removeEventListener("mouseup", endDragging);

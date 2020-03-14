@@ -56,7 +56,7 @@ cv.approxPolyDP(cnt, approxCnt, 0.01 * perimeter, true);
 
 ```javascript
 if (approxCnt.rows == 4) {
-  let sortedCoordinates = getContourCoordinates(approxCnt);
+  let sortedCoordinates = ocvUtils.getContourCoordinates(approxCnt);
   ...
 }
 ```

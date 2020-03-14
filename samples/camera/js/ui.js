@@ -15,7 +15,7 @@ const icons = [
 function initUI() {
   let menuHeight = parseInt(getComputedStyle(
     document.querySelector('.camera-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
 
   controls = {
     lastProIcon: 'standard',
@@ -116,7 +116,7 @@ function initUI() {
       console.error("ImageCapture is not inilialized.");
       return;
     }
-    takePhoto();
+    camUtils.takePhoto();
   });
 
   // TODO(sasha): move to utils.js.
@@ -132,9 +132,9 @@ function initUI() {
       videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
     }
-    utils.clearError();
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startCameraProcessing);
+    camUtils.clearError();
+    camUtils.stopCamera();
+    camUtils.startCamera(videoConstraint, 'videoInput', startCameraProcessing);
   });
 }
 

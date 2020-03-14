@@ -24,7 +24,7 @@ const filters = {
 function initUI() {
   let menuHeight = parseInt(getComputedStyle(
     document.querySelector('.camera-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
   initStats();
 
   controls = {
@@ -100,7 +100,7 @@ function initUI() {
     // Here we are not using takePhoto() per se.
     // new ImageCapture(videoTrack) gives image without applied filter.
     let dstCanvas = document.getElementById('gallery');
-    drawCanvas(dstCanvas, canvasOutput);
+    camUtils.drawCanvas(dstCanvas, canvasOutput);
   });
 
   // TODO(sasha): move to utils.js.
@@ -116,12 +116,12 @@ function initUI() {
       videoConstraint.deviceId = { exact: controls.frontCamera.deviceId };
       facingModeButton.innerText = 'camera_rear';
     }
-    utils.clearError();
-    utils.stopCamera();
-    utils.startCamera(videoConstraint, 'videoInput', startVideoProcessing);
+    camUtils.clearError();
+    camUtils.stopCamera();
+    camUtils.startCamera(videoConstraint, 'videoInput', camUtils.startVideoProcessing);
   });
 
-  enableThreads();
+  ocvUtils.enableThreads();
 }
 
 function setFilter(filter) {

@@ -1,4 +1,4 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
 let video = document.getElementById('videoInput');
 let videoConstraint;
 let imageCapturer = null;
@@ -76,7 +76,7 @@ function completeStyling() {
 }
 
 function startCamera() {
-  utils.startCamera(videoConstraint, 'videoInput', onCameraStarted);
+  camUtils.startCamera(videoConstraint, 'videoInput', onCameraStarted);
 }
 
 function onCameraStarted() {
@@ -98,4 +98,4 @@ function onCameraStarted() {
 }
 
 initUI();
-initCameraSettingsAndStart();
+camUtils.initCameraSettingsAndStart();

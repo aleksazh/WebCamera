@@ -60,7 +60,7 @@ function loadCardImg(src, grayCard, rectPointUpperLeft, rectPointBottomRight) {
   cardImg = src.roi(rect);
 
   // Resize card and convert it to grayscale.
-  resizeImage(cardImg, width = 300);
+  ocvUtils.resizeImage(cardImg, width = 300);
   cv.cvtColor(cardImg, grayCard, cv.COLOR_BGR2GRAY);
   cardImg.delete();
 }

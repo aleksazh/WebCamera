@@ -1,4 +1,5 @@
-let utils = new Utils('errorMessage');
+let camUtils = new CamUtils('errorMessage');
+let ocvUtils = new OcvUtils();
 let stats = null;
 let controls = {};
 let videoConstraint;
@@ -73,7 +74,7 @@ function processVideo() {
       if (approxCnt.rows == 4) { // If contour approximation has 4 angles.
         // Get coordinates of contour and sort them clockwise
         // with upper left point as the first point.
-        let sortedCoordinates = getContourCoordinates(approxCnt);
+        let sortedCoordinates = ocvUtils.getContourCoordinates(approxCnt);
 
         if (isCloseToExpectedContour(sortedCoordinates)) {
           document.getElementById('retryButton').disabled = false;
@@ -92,7 +93,7 @@ function processVideo() {
     requestAnimationFrame(processVideo);
 
   } catch (err) {
-    utils.printError(err);
+    camUtils.printError(err);
   }
 }
 
@@ -116,7 +117,7 @@ function initUI() {
     document.querySelector('.camera-bar-wrapper')).height);
   menuHeight += parseInt(getComputedStyle(
     document.querySelector('.output-bar-wrapper')).height);
-  getVideoConstraint(menuHeight);
+  camUtils.getVideoConstraint(menuHeight);
   initStats();
 
   controls = {
@@ -144,7 +145,7 @@ function initUI() {
     let label = document.querySelector(`label[for=cardNumber]`);
     label.classList.add('hidden');
 
-    startVideoProcessing();
+    camUtils.startVideoProcessing();
   });
 
   let edgeErrorElem = document.getElementById('edgeError');
@@ -155,15 +156,15 @@ function initUI() {
 }
 
 function startCamera() {
-  utils.startCamera(videoConstraint, 'videoInput', onVideoStarted);
+  camUtils.startCamera(videoConstraint, 'videoInput', camUtils.onVideoStarted);
 }
 
 function cleanupAndStop() {
   src.delete(); dst.delete();
-  utils.stopCamera(); onVideoStopped();
+  camUtils.stopCamera(); camUtils.onVideoStopped();
 }
 
-utils.loadOpenCv(() => {
+ocvUtils.loadOpenCv(() => {
   initUI();
-  initCameraSettingsAndStart();
+  camUtils.initCameraSettingsAndStart();
 });

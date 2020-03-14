@@ -62,7 +62,7 @@ cnt.delete();
   let cnt = contours.get(res.i);
   let perimeter = cv.arcLength(cnt, true);
   cv.approxPolyDP(cnt, approxCnt, 0.01 * perimeter, true);
-  approxCoords = getContourCoordinates(approxCnt);
+  approxCoords = ocvUtils.getContourCoordinates(approxCnt);
   cnt.delete();
 ```
 

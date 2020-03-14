@@ -251,7 +251,7 @@ function takePhoto() {
     .then(blob => createImageBitmap(blob))
     .then((imageBitmap) => {
       if (checkCounter()) {
-        drawCanvas(takePhotoCanvasArray[counter - 1], imageBitmap);
+        camUtils.drawCanvas(takePhotoCanvasArray[counter - 1], imageBitmap);
         // exposure time values are in 100 µs units.
         exposureTimeArray[counter - 1] = exposureTimeSlider.value / 10000;
         console.log("exposure Time Slider value = ", exposureTimeSlider.value);
@@ -281,17 +281,6 @@ function opencvIsReady() {
 }
 
 /* Utils */
-
-function drawCanvas(canvas, img) {
-  canvas.width = getComputedStyle(canvas).width.split('px')[0];
-  canvas.height = getComputedStyle(canvas).height.split('px')[0];
-  let ratio = Math.min(canvas.width / img.width, canvas.height / img.height);
-  let x = (canvas.width - img.width * ratio) / 2;
-  let y = (canvas.height - img.height * ratio) / 2;
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-  canvas.getContext('2d').drawImage(img, 0, 0, img.width, img.height,
-    x, y, img.width * ratio, img.height * ratio);
-}
 
 function addTextToCanvas(text, canvasId) {
   const canvas = document.getElementById(canvasId);

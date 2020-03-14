@@ -28,7 +28,7 @@ function initMenu(smallWidth, smallHeight) {
     cards[i].style.transform = 'rotate(90deg)'
       + `translateX(-${cardShift}px) translateY(${cardShift}px)`;
   }
-  if (isMobileDevice()) {
+  if (CamUtils.isMobileDevice()) {
     carousels.forEach(function (carousel, i) {
       carousel.style.overflowX = 'scroll';
       carousel.style.WebkitOverflowScrolling = 'touch';
