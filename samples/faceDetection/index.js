@@ -71,8 +71,8 @@ function processVideo() {
     for (let i = 0; i < downscaleLevel; ++i) cv.pyrDown(frameBGR, frameBGR);
     let matSize = frameBGR.size();
     let blob = cv.blobFromImage(frameBGR, 1.0, {width: 672, height: 384}, [104, 117, 123, 0], false, false);
-	  faceNet.setInput(blob);
-	  let faceVec = faceNet.forward();
+	faceNet.setInput(blob);
+	let faceVec = faceNet.forward();
 
     //for (let i = 0; i < faceVec.size(); ++i) {
     //  let face = faceVec.get(i);
